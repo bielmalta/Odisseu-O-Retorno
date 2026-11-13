@@ -42,7 +42,12 @@ if(NOT raylib_FOUND)
     FetchContent_MakeAvailable(raylib)
 endif()
 
-add_executable(odisseu_o_retorno src/main.c)
+add_executable(
+    odisseu_o_retorno
+    src/main.c
+    src/jogo/cenario.c
+    src/render/jogador.c
+)
 
 target_include_directories(
     odisseu_o_retorno
