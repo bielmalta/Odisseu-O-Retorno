@@ -1,11 +1,71 @@
+
 # Odisseu: O Último Retorno
 
-Jogo 3D em primeira pessoa desenvolvido em C com Raylib para a disciplina de
-Algoritmos e Estruturas de Dados.
+Jogo 3D em primeira pessoa inspirado em A Odisseia, desenvolvido em linguagem C com a biblioteca Raylib para a disciplina de Algoritmos e Estruturas de Dados.
+
+## Objetivo do jogo
+
+O jogador assume o papel de Odisseu, que precisa enfrentar criaturas mitológicas e superar diferentes desafios para conseguir retornar à sua terra natal, Ítaca.
+
+Cada fase apresenta um cenário inspirado na mitologia grega, com objetivos de exploração, interações e combates por turnos. Para avançar, o jogador deverá cumprir o objetivo da fase, derrotar os inimigos e encontrar a saída.
+
+## Funcionamento do jogo
+
+O jogo será dividido em dois modos principais:
+
+- Exploração: o jogador poderá movimentar Odisseu em primeira pessoa, observar o cenário e interagir com objetos para cumprir os objetivos.
+- Combate: ao encontrar criaturas mitológicas, o jogador participará de batalhas por turnos, podendo atacar ou defender.
+
+A ordem dos participantes no combate será organizada por um algoritmo QuickSort, considerando seus atributos de velocidade e iniciativa.
+
+Uma lista circular duplamente encadeada será responsável por controlar a sequência dos turnos.
+
+### Fluxo principal
+
+```text
+Início do jogo
+      |
+      v
+Exploração do cenário
+      |
+      v
+Cumprimento do objetivo
+      |
+      v
+Combate por turnos
+      |
+      v
+Vitória no combate
+      |
+      v
+Saída liberada
+      |
+      v
+Próxima fase
+      |
+      v
+Retorno a Ítaca
+```
+
+Em caso de derrota, o jogador poderá reiniciar o confronto.
+
+## Controles previstos
+
+| Controle | Ação |
+|---|---|
+| W, A, S, D | Movimentar Odisseu |
+| Mouse | Controlar a câmera |
+| E | Interagir com objetos |
+| Botão esquerdo do mouse | Selecionar opções da interface |
+| ESC | Pausar ou retomar o jogo |
+
+Durante os combates, o jogador poderá selecionar as ações de atacar e defender pela interface.
+
+Os controles serão implementados nos próximos commits e poderão ser ajustados durante o desenvolvimento.
 
 ## Tecnologias
 
-- C11
+- Linguagem C11
 - Raylib 6.2
 - CMake 3.20 ou superior
 
@@ -15,35 +75,36 @@ Instale:
 
 1. Git;
 2. CMake 3.20 ou superior;
-3. um compilador C, como Visual Studio Build Tools com o componente de C++ ou
-   MinGW-w64.
+3. Um compilador C, como Visual Studio Build Tools com o componente de C++ ou MinGW-w64.
 
-A Raylib não precisa ser instalada manualmente. Por padrão, o CMake procura uma
-instalação local compatível e, caso não encontre, baixa a tag oficial `6.2` do
-repositório da Raylib durante a primeira configuração.
+A Raylib não precisa ser instalada manualmente. Por padrão, o CMake procura uma instalação local compatível e, caso não encontre, baixa a tag oficial `6.2` do repositório da Raylib durante a primeira configuração.
 
-Nenhum caminho pessoal para SDK, compilador ou Raylib deve ser versionado no
-projeto.
+Nenhum caminho pessoal para SDK, compilador ou Raylib deve ser versionado no projeto.
 
 ## Compilação
 
 Na raiz do repositório, execute:
 
-```powershell
+```bash
 cmake -S . -B build
 cmake --build build --config Release
 ```
 
-O executável será gerado dentro de `build/bin`. Em geradores com múltiplas
-configurações, como Visual Studio, ele poderá estar em `build/bin/Release`.
+O executável será gerado dentro de `build/bin`. Em geradores com múltiplas configurações, como Visual Studio, ele poderá estar em `build/bin/Release`.
 
 Para exigir uma Raylib já instalada e impedir o download automático:
 
-```powershell
+```bash
 cmake -S . -B build -DODISSEU_FETCH_RAYLIB=OFF
 ```
 
-## Estrutura inicial
+## Execução
+
+Após a compilação, execute o arquivo `odisseu_o_retorno.exe` gerado na pasta `build/bin` ou `build/bin/Release`, dependendo do gerador utilizado.
+
+No estágio inicial do projeto, a aplicação apresenta apenas uma janela Raylib. A exploração, os combates e as demais funcionalidades serão implementados nos próximos commits.
+
+## Arquitetura inicial
 
 ```text
 src/
@@ -61,10 +122,71 @@ assets/
 tests/
 ```
 
-- `src/core`: loop, estados gerais e troca de telas.
-- `src/estruturas`: lista circular e QuickSort em C puro.
-- `src/jogo`: personagem, combate, objetivos, fases e jornada.
-- `src/render`: câmera, entrada, HUD, áudio e desenho com Raylib.
-- `include`: interfaces públicas dos módulos.
-- `assets`: recursos visuais e sonoros.
-- `tests`: testes da estrutura de dados e das regras, sem janela gráfica.
+### Organização dos módulos
+
+- `src/main.c`: ponto de entrada e loop principal.
+- `src/core`: estados gerais, atualização do jogo e troca de telas.
+- `src/estruturas`: lista circular duplamente encadeada e QuickSort.
+- `src/jogo`: personagens, regras de combate, objetivos, fases e jornada.
+- `src/render`: câmera, controles, HUD, áudio e renderização com Raylib.
+- `include`: arquivos de cabeçalho com as interfaces públicas dos módulos.
+- `assets`: modelos, texturas, fontes e arquivos de áudio.
+- `tests`: testes das estruturas de dados e regras do jogo.
+
+### Convenções de programação
+
+O projeto seguirá as seguintes convenções:
+
+- Todo o código do jogo será escrito em C11.
+- Os arquivos `.c` conterão as implementações das funções.
+- Os arquivos `.h` declararão as estruturas e funções compartilhadas entre os módulos.
+- Os módulos de lógica deverão ser separados da renderização gráfica.
+- As funções internas de cada módulo poderão ser declaradas como `static`.
+- A memória alocada dinamicamente deverá ser liberada corretamente.
+- Os recursos carregados pela Raylib deverão ser descarregados ao encerrar o jogo.
+
+## Estruturas de dados e algoritmos
+
+### Lista circular duplamente encadeada
+
+Será utilizada para organizar os participantes dos combates.
+
+Cada nó terá referências para o participante anterior e o próximo, permitindo avançar e retroceder entre os turnos.
+
+### QuickSort
+
+Será utilizado para ordenar os participantes por iniciativa, considerando a velocidade e possíveis modificadores.
+
+A ordenação determinará a sequência real das ações durante cada rodada.
+
+## Testes
+
+Os testes das estruturas de dados e das regras do jogo serão escritos em C e executados separadamente, sem a necessidade de abrir uma janela gráfica.
+
+Serão utilizados testes com `assert` para validar operações da lista, ordenação dos participantes e funcionamento dos combates.
+
+Os executáveis e comandos específicos dos testes serão adicionados quando os módulos de teste forem implementados.
+
+## Escopo do primeiro protótipo
+
+O primeiro protótipo jogável deverá conter:
+
+- Uma fase 3D explorável em primeira pessoa.
+- Movimentação e controle de câmera.
+- Interação com objetos e objetivo de exploração.
+- Combate por turnos entre Odisseu e uma criatura.
+- Ações de ataque e defesa.
+- Interface com informações de vida e ordem dos turnos.
+- Condições de vitória, derrota e reinício.
+
+As demais fases e criaturas serão adicionadas posteriormente.
+
+## Equipe
+
+Projeto desenvolvido pela Turma A para a disciplina de Algoritmos e Estruturas de Dados da CESAR School.
+
+- Gabriel Gondim Malta
+- Arthur de Almeida Oliveira
+- Márcio Rodriguez Perez
+- Guilherme Silva Guimarães
+- Hélio Moraes
