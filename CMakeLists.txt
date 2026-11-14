@@ -93,3 +93,10 @@ else()
 endif()
 
 target_link_libraries(odisseu_o_retorno PRIVATE odisseu_core)
+
+add_library(
+    odisseu_core
+    STATIC
+        src/core/personagem.c
+        src/estruturas/lista_turnos.c
+)
