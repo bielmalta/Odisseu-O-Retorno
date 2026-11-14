@@ -22,6 +22,12 @@ bool listaVazia(const ListaTurnos *lista);
 
 bool inserirNaLista(ListaTurnos *lista, Personagem *personagem);
 
+bool removerDaLista(ListaTurnos *lista, const Personagem *personagem);
+
+Personagem *personagemDaVez(const ListaTurnos *lista);
+Personagem *avancarTurno(ListaTurnos *lista);
+Personagem *voltarTurno(ListaTurnos *lista);
+
 void liberarLista(ListaTurnos *lista);
 
 #endif

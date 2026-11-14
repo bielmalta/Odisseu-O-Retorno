@@ -53,3 +53,69 @@ void liberarLista(ListaTurnos *lista){
 
     iniciarLista(lista);
 }
+
+
+static NoTurno *buscarNo(const ListaTurnos *lista, const Personagem *personagem)
+{
+    NoTurno *no = lista->inicio;
+
+    for (int i = 0; i < lista->tamanho; i++) {
+        if (no->personagem == personagem) {
+            return no;
+        }
+        no = no->proximo;
+    }
+
+    return NULL;
+}
+
+bool removerDaLista(ListaTurnos *lista, const Personagem *personagem)
+{
+    NoTurno *no = buscarNo(lista, personagem);
+
+    if (no == NULL) {
+        return false;
+    }
+
+    if (lista->tamanho == 1) {
+        free(no);
+        iniciarLista(lista);
+        return true;
+    }
+
+    no->anterior->proximo = no->proximo;
+    no->proximo->anterior = no->anterior;
+
+    if (lista->inicio == no) {
+        lista->inicio = no->proximo;
+    }
+    if (lista->atual == no) {
+        lista->atual = no->anterior;
+    }
+
+    free(no);
+    lista->tamanho--;
+    return true;
+}
+
+Personagem *personagemDaVez(const ListaTurnos *lista){
+    return lista->atual != NULL ? lista->atual->personagem : NULL;
+}
+
+Personagem *avancarTurno(ListaTurnos *lista){
+    if (lista->atual == NULL) {
+        return NULL;
+    }
+
+    lista->atual = lista->atual->proximo;
+    return lista->atual->personagem;
+}
+
+Personagem *voltarTurno(ListaTurnos *lista){
+    if (lista->atual == NULL) {
+        return NULL;
+    }
+
+    lista->atual = lista->atual->anterior;
+    return lista->atual->personagem;
+}
