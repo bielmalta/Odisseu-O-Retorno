@@ -73,3 +73,23 @@ add_custom_command(
     COMMENT "Copiando assets para a pasta do executavel"
 )
 
+
+add_library(
+    odisseu_core
+    STATIC
+        src/core/personagem.c
+)
+
+target_include_directories(
+    odisseu_core
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+if(MSVC)
+    target_compile_options(odisseu_core PRIVATE /W4)
+else()
+    target_compile_options(odisseu_core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+target_link_libraries(odisseu_o_retorno PRIVATE odisseu_core)
