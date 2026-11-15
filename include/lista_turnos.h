@@ -20,14 +20,20 @@ typedef struct {
 void iniciarLista(ListaTurnos *lista);
 bool listaVazia(const ListaTurnos *lista);
 
-bool inserirNaLista(ListaTurnos *lista, Personagem *personagem);
+bool inserirPersonagem(ListaTurnos *lista, Personagem *personagem);
 
-bool removerDaLista(ListaTurnos *lista, const Personagem *personagem);
+bool removerPersonagem(ListaTurnos *lista, const Personagem *personagem);
+
+Personagem *buscarPersonagem(const ListaTurnos *lista, const char *nome);
+
+int percorrerParticipantes(const ListaTurnos *lista, Personagem **saida, int capacidade);
 
 Personagem *personagemDaVez(const ListaTurnos *lista);
 Personagem *avancarTurno(ListaTurnos *lista);
-Personagem *voltarTurno(ListaTurnos *lista);
+Personagem *retrocederTurno(ListaTurnos *lista);
 
-void liberarLista(ListaTurnos *lista);
+void limparListaCombate(ListaTurnos *lista);
+
+bool listaConsistente(const ListaTurnos *lista);
 
 #endif

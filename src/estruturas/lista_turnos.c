@@ -1,5 +1,6 @@
 #include "lista_turnos.h"
 #include <stdlib.h>
+#include <string.h>
 
 void iniciarLista(ListaTurnos *lista){
     lista->inicio = NULL;
@@ -11,7 +12,7 @@ bool listaVazia(const ListaTurnos *lista){
     return lista->inicio == NULL;
 }
 
-bool inserirNaLista(ListaTurnos *lista, Personagem *personagem){
+bool inserirPersonagem(ListaTurnos *lista, Personagem *personagem){
     NoTurno *novo;
 
     if (personagem == NULL) {
@@ -42,7 +43,7 @@ bool inserirNaLista(ListaTurnos *lista, Personagem *personagem){
     return true;
 }
 
-void liberarLista(ListaTurnos *lista){
+void limparListaCombate(ListaTurnos *lista){
     NoTurno *no = lista->inicio;
 
     for (int i = 0; i < lista->tamanho; i++) {
@@ -54,9 +55,7 @@ void liberarLista(ListaTurnos *lista){
     iniciarLista(lista);
 }
 
-
-static NoTurno *buscarNo(const ListaTurnos *lista, const Personagem *personagem)
-{
+static NoTurno *buscarNo(const ListaTurnos *lista, const Personagem *personagem){
     NoTurno *no = lista->inicio;
 
     for (int i = 0; i < lista->tamanho; i++) {
@@ -69,8 +68,7 @@ static NoTurno *buscarNo(const ListaTurnos *lista, const Personagem *personagem)
     return NULL;
 }
 
-bool removerDaLista(ListaTurnos *lista, const Personagem *personagem)
-{
+bool removerPersonagem(ListaTurnos *lista, const Personagem *personagem){
     NoTurno *no = buscarNo(lista, personagem);
 
     if (no == NULL) {
@@ -98,8 +96,42 @@ bool removerDaLista(ListaTurnos *lista, const Personagem *personagem)
     return true;
 }
 
+Personagem *buscarPersonagem(const ListaTurnos *lista, const char *nome){
+    NoTurno *no = lista->inicio;
+
+    if (nome == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < lista->tamanho; i++) {
+        if (strcmp(no->personagem->nome, nome) == 0) {
+            return no->personagem;
+        }
+        no = no->proximo;
+    }
+
+    return NULL;
+}
+
+int percorrerParticipantes(const ListaTurnos *lista, Personagem **saida, int capacidade){
+    NoTurno *no = lista->inicio;
+    int quantidade = 0;
+
+    for (int i = 0; i < lista->tamanho && quantidade < capacidade; i++) {
+        saida[quantidade] = no->personagem;
+        quantidade++;
+        no = no->proximo;
+    }
+
+    return quantidade;
+}
+
 Personagem *personagemDaVez(const ListaTurnos *lista){
-    return lista->atual != NULL ? lista->atual->personagem : NULL;
+    if (lista->atual == NULL) {
+        return NULL;
+    }
+
+    return lista->atual->personagem;
 }
 
 Personagem *avancarTurno(ListaTurnos *lista){
@@ -111,11 +143,32 @@ Personagem *avancarTurno(ListaTurnos *lista){
     return lista->atual->personagem;
 }
 
-Personagem *voltarTurno(ListaTurnos *lista){
+Personagem *retrocederTurno(ListaTurnos *lista){
     if (lista->atual == NULL) {
         return NULL;
     }
 
     lista->atual = lista->atual->anterior;
     return lista->atual->personagem;
+}
+
+bool listaConsistente(const ListaTurnos *lista){
+    NoTurno *no = lista->inicio;
+    bool achouAtual = false;
+
+    if (listaVazia(lista)) {
+        return lista->tamanho == 0 && lista->atual == NULL;
+    }
+
+    for (int i = 0; i < lista->tamanho; i++) {
+        if (no->proximo->anterior != no || no->anterior->proximo != no) {
+            return false;
+        }
+        if (no == lista->atual) {
+            achouAtual = true;
+        }
+        no = no->proximo;
+    }
+
+    return no == lista->inicio && achouAtual;
 }
