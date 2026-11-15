@@ -128,3 +128,7 @@ add_test(NAME acoes_combate COMMAND teste_acoes_combate)
 add_executable(teste_ia_inimigo tests/teste_ia_inimigo.c)
 target_link_libraries(teste_ia_inimigo PRIVATE odisseu_core)
 add_test(NAME ia_inimigo COMMAND teste_ia_inimigo)
+
+add_executable(teste_cenarios_combate tests/teste_cenarios_combate.c)
+target_link_libraries(teste_cenarios_combate PRIVATE odisseu_core)
+add_test(NAME cenarios_combate COMMAND teste_cenarios_combate)
