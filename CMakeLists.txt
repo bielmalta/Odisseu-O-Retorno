@@ -86,6 +86,7 @@ add_library(
     STATIC
         src/core/personagem.c
         src/estruturas/lista_turnos.c
+        src/estruturas/quicksort.c
 )
 
 target_include_directories(
