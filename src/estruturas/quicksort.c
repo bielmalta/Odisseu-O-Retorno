@@ -1,5 +1,6 @@
 #include "quicksort.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 bool agePrimeiro(const NoTurno *a, const NoTurno *b)
@@ -57,4 +58,47 @@ void quickSort(NoTurno **nos, int inicio, int fim)
             fim = pivo - 1;
         }
     }
+}
+
+static void religarNaOrdem(ListaTurnos *lista, NoTurno **nos, int quantidade)
+{
+    for (int i = 0; i < quantidade; i++) {
+        nos[i]->proximo = nos[(i + 1) % quantidade];
+        nos[i]->anterior = nos[(i - 1 + quantidade) % quantidade];
+    }
+
+    lista->inicio = nos[0];
+    lista->atual = nos[0];
+}
+
+bool ordenarPorVelocidade(ListaTurnos *lista)
+{
+    NoTurno **nos;
+    NoTurno *no;
+
+    if (lista == NULL) {
+        return false;
+    }
+
+    if (lista->tamanho <= 1) {
+        lista->atual = lista->inicio;
+        return true;
+    }
+
+    nos = malloc((size_t)lista->tamanho * sizeof *nos);
+    if (nos == NULL) {
+        return false;
+    }
+
+    no = lista->inicio;
+    for (int i = 0; i < lista->tamanho; i++) {
+        nos[i] = no;
+        no = no->proximo;
+    }
+
+    quickSort(nos, 0, lista->tamanho - 1);
+    religarNaOrdem(lista, nos, lista->tamanho);
+
+    free(nos);
+    return true;
 }
