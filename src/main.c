@@ -4,6 +4,8 @@
 #include "fase.h"
 #include "fase_render.h"
 #include "jogador.h"
+#include "combate.h"
+#include "personagem.h"
 
 enum {
     LARGURA_INICIAL = 1280,
@@ -14,6 +16,15 @@ enum {
 static Jogador jogador;
 static Fase fase;
 static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
+
+
+/* Controlador de combate e participantes do encontro inicial. */
+static Combate combate;
+
+static Personagem odisseu;
+static Personagem polifemo;
+
+static Personagem *inimigosCombate[1];
 
 /* Unico ponto que liga o estado do jogo ao controle do jogador:
  * so a exploracao libera movimento e giro da camera. */
@@ -31,25 +42,61 @@ static void definirEstado(EstadoJogo novoEstado)
 /* O objetivo foi cumprido: coloca Odisseu de frente para o inimigo e
  * entra em combate (movimento bloqueado). A transicao suave da camera
  * fica para o commit 19. */
+
 static void iniciarConfronto(void)
 {
     Vector3 alvo = fase.pontosInimigos[0];
     alvo.y += 2.5f;
 
-    posicionarJogadorOlhando(&jogador, fase.pontoJogadorConfronto, alvo);
+    /* Prepara a lista circular com os participantes. */
+    if (!prepararCombate(
+            &combate,
+            &odisseu,
+            inimigosCombate,
+            1)) {
+        TraceLog(LOG_ERROR, "Falha ao preparar combate.");
+        return;
+    }
+
+    /* Posiciona a camera diante do inimigo. */
+    posicionarJogadorOlhando(
+        &jogador,
+        fase.pontoJogadorConfronto,
+        alvo
+    );
+
     definirEstado(ESTADO_COMBATE);
+
+    TraceLog(LOG_INFO, "Combate contra Polifemo iniciado.");
 }
+
+
 
 static void inicializarJogo(void)
 {
     SetTargetFPS(FPS_ALVO);
-    /* ESC pausa/retoma (README); a janela fecha pelo botao X. */
     SetExitKey(KEY_NULL);
 
     criarFaseBase(&fase);
     inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
+
+    /* Inicializa o controlador de combate. */
+    inicializarCombate(&combate);
+
+    /* Cria os participantes do primeiro encontro. */
+    odisseu = criarPersonagem(
+        "Odisseu", TIPO_HEROI, 100, 20, 10, 12
+    );
+
+    polifemo = criarPersonagem(
+        "Polifemo", TIPO_INIMIGO, 120, 25, 8, 8
+    );
+
+    inimigosCombate[0] = &polifemo;
+
     definirEstado(ESTADO_EXPLORACAO);
 }
+
 
 static void atualizarJogo(float deltaTempo)
 {
@@ -59,11 +106,26 @@ static void atualizarJogo(float deltaTempo)
         );
     }
 
-    /* Tecla de teste ate o combate existir (commit 12): encerra o confronto. */
-    if (IsKeyPressed(KEY_F2) && estadoAtual == ESTADO_COMBATE) {
-        encerrarConfronto(&fase);
-        definirEstado(ESTADO_EXPLORACAO);
+    
+/* Controla os turnos durante o confronto. */
+    if (estadoAtual == ESTADO_COMBATE) {
+        if (IsKeyPressed(KEY_F2)) {
+            /* Encerramento provisório para testar a exploração. */
+            finalizarCombate(&combate);
+            encerrarConfronto(&fase);
+            definirEstado(ESTADO_EXPLORACAO);
+        } else {
+            /* Atualiza a máquina de estados do combate. */
+            atualizarCombate(&combate);
+
+            /* O jogador só pode agir durante seu próprio turno. */
+            if (combate.estado == COMBATE_WAITING_PLAYER &&
+                IsKeyPressed(KEY_ENTER)) {
+                concluirAcaoCombate(&combate);
+            }
+        }
     }
+
 
     if (estadoAtual == ESTADO_EXPLORACAO && IsKeyPressed(KEY_E)) {
         interagir(&fase);
@@ -117,18 +179,24 @@ static void desenharJogo(void)
         "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
         12, GetScreenHeight() - 50, 18, BLACK
     );
+    
     DrawText(
-        "ESC pausa | F2 encerra o combate (teste)",
+        "ESC pausa | ENTER confirma turno | F2 encerra combate (teste)",
         12, GetScreenHeight() - 28, 18, BLACK
     );
+
     DrawFPS(12, 12);
 }
 
+
 static void finalizarJogo(void)
 {
-    definirControleJogador(&jogador, false); /* devolve o cursor ao sistema */
-    /* Os recursos carregados pelos proximos commits serao liberados aqui. */
+    definirControleJogador(&jogador, false);
+
+    /* Libera os nós da lista circular ao fechar o jogo. */
+    finalizarCombate(&combate);
 }
+
 
 int main(void)
 {

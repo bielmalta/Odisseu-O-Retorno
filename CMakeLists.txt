@@ -87,6 +87,7 @@ add_library(
         src/core/personagem.c
         src/estruturas/lista_turnos.c
         src/estruturas/quicksort.c
+        src/jogo/combate.c
 )
 
 target_include_directories(
@@ -112,3 +113,8 @@ add_test(NAME lista_turnos COMMAND teste_lista_turnos)
 add_executable(teste_quicksort tests/teste_quicksort.c)
 target_link_libraries(teste_quicksort PRIVATE odisseu_core)
 add_test(NAME quicksort COMMAND teste_quicksort)
+
+
+add_executable(teste_combate tests/teste_combate.c)
+target_link_libraries(teste_combate PRIVATE odisseu_core)
+add_test(NAME combate COMMAND teste_combate)
