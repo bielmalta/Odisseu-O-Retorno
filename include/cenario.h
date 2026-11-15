@@ -5,14 +5,28 @@
 
 #define CENARIO_MAX_CAIXAS 32
 
-/* Cenario de teste para o controle em primeira pessoa (commit 03).
- * A fase base completa (objetivo, interacao, saida) vem no commit 04. */
+/* Altura usada para "guardar" uma caixa removida: fica longe do mundo e
+ * nunca colide nem aparece. */
+#define CENARIO_Y_REMOVIDA (-1000.0f)
+
+/* Conjunto de caixas solidas (paredes e obstaculos). O jogador colide com
+ * `caixas`; `cores` so serve para o desenho. */
 typedef struct Cenario {
-    BoundingBox caixas[CENARIO_MAX_CAIXAS]; /* paredes e obstaculos solidos */
+    BoundingBox caixas[CENARIO_MAX_CAIXAS];
+    Color cores[CENARIO_MAX_CAIXAS];
     int quantidade;
 } Cenario;
 
-void criarCenarioTeste(Cenario *cenario);
+void limparCenario(Cenario *cenario);
+
+/* Retorna o indice da caixa criada ou -1 se nao houver espaco. */
+int adicionarCaixaCenario(
+    Cenario *cenario, Vector3 centro, Vector3 tamanho, Color cor
+);
+
+/* Remove a caixa (ex.: portao que se abre) sem alterar os outros indices. */
+void removerCaixaCenario(Cenario *cenario, int indice);
+
 void desenharCenario(const Cenario *cenario);
 
 #endif

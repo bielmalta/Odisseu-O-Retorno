@@ -41,6 +41,9 @@ typedef struct ComandosJogador {
 
 void inicializarJogador(Jogador *jogador, Vector3 posicaoInicial, float yaw);
 
+/* Coloca o jogador em `posicao` (pes) olhando para `alvo`. */
+void posicionarJogadorOlhando(Jogador *jogador, Vector3 posicao, Vector3 alvo);
+
 /* Ativa/desativa o controle e captura/libera o cursor do mouse. */
 void definirControleJogador(Jogador *jogador, bool ativo);
 

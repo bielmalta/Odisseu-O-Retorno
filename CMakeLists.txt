@@ -46,6 +46,8 @@ add_executable(
     odisseu_o_retorno
     src/main.c
     src/jogo/cenario.c
+    src/jogo/fase.c
+    src/render/fase_render.c
     src/render/jogador.c
 )
 
@@ -83,6 +85,7 @@ add_library(
     odisseu_core
     STATIC
         src/core/personagem.c
+        src/estruturas/lista_turnos.c
 )
 
 target_include_directories(
@@ -98,10 +101,3 @@ else()
 endif()
 
 target_link_libraries(odisseu_o_retorno PRIVATE odisseu_core)
-
-add_library(
-    odisseu_core
-    STATIC
-        src/core/personagem.c
-        src/estruturas/lista_turnos.c
-)

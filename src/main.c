@@ -1,7 +1,8 @@
 #include "raylib.h"
 
-#include "cenario.h"
 #include "estado_jogo.h"
+#include "fase.h"
+#include "fase_render.h"
 #include "jogador.h"
 
 enum {
@@ -11,7 +12,7 @@ enum {
 };
 
 static Jogador jogador;
-static Cenario cenario;
+static Fase fase;
 static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
 /* Unico ponto que liga o estado do jogo ao controle do jogador:
@@ -27,14 +28,26 @@ static void definirEstado(EstadoJogo novoEstado)
     aplicarEstado();
 }
 
+/* O objetivo foi cumprido: coloca Odisseu de frente para o inimigo e
+ * entra em combate (movimento bloqueado). A transicao suave da camera
+ * fica para o commit 19. */
+static void iniciarConfronto(void)
+{
+    Vector3 alvo = fase.pontosInimigos[0];
+    alvo.y += 2.5f;
+
+    posicionarJogadorOlhando(&jogador, fase.pontoJogadorConfronto, alvo);
+    definirEstado(ESTADO_COMBATE);
+}
+
 static void inicializarJogo(void)
 {
     SetTargetFPS(FPS_ALVO);
     /* ESC pausa/retoma (README); a janela fecha pelo botao X. */
     SetExitKey(KEY_NULL);
 
-    criarCenarioTeste(&cenario);
-    inicializarJogador(&jogador, (Vector3){ 0.0f, 0.0f, 14.0f }, 0.0f);
+    criarFaseBase(&fase);
+    inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
     definirEstado(ESTADO_EXPLORACAO);
 }
 
@@ -46,20 +59,39 @@ static void atualizarJogo(float deltaTempo)
         );
     }
 
-    /* Tecla de depuracao ate o combate existir (commit 12). */
-    if (IsKeyPressed(KEY_F2) && estadoAtual != ESTADO_PAUSA) {
-        definirEstado(
-            estadoAtual == ESTADO_COMBATE ? ESTADO_EXPLORACAO : ESTADO_COMBATE
-        );
+    /* Tecla de teste ate o combate existir (commit 12): encerra o confronto. */
+    if (IsKeyPressed(KEY_F2) && estadoAtual == ESTADO_COMBATE) {
+        encerrarConfronto(&fase);
+        definirEstado(ESTADO_EXPLORACAO);
+    }
+
+    if (estadoAtual == ESTADO_EXPLORACAO && IsKeyPressed(KEY_E)) {
+        interagir(&fase);
     }
 
     atualizarJogador(
         &jogador,
         lerComandosJogador(),
-        cenario.caixas,
-        cenario.quantidade,
+        fase.cenario.caixas,
+        fase.cenario.quantidade,
         deltaTempo
     );
+
+    /* A mira so vale enquanto o jogador pode explorar. */
+    if (estadoAtual == ESTADO_EXPLORACAO) {
+        const Ray raio = {
+            jogador.camera.position, direcaoOlharJogador(&jogador)
+        };
+        atualizarMiraFase(&fase, raio);
+    } else {
+        fase.itemAlvo = -1; /* sem exploracao nao ha objeto mirado */
+    }
+
+    atualizarFase(&fase, jogador.posicao, deltaTempo);
+
+    if (fase.etapa == ETAPA_CONFRONTO && estadoAtual == ESTADO_EXPLORACAO) {
+        iniciarConfronto();
+    }
 }
 
 static void desenharJogo(void)
@@ -75,20 +107,20 @@ static void desenharJogo(void)
     ClearBackground((Color){ 135, 180, 220, 255 });
 
     BeginMode3D(jogador.camera);
-    desenharCenario(&cenario);
+    desenharFase(&fase);
     EndMode3D();
 
-    const int centroX = GetScreenWidth() / 2;
-    const int centroY = GetScreenHeight() / 2;
-    DrawLine(centroX - 8, centroY, centroX + 8, centroY, WHITE);
-    DrawLine(centroX, centroY - 8, centroX, centroY + 8, WHITE);
+    desenharHudFase(&fase);
 
-    DrawText(TextFormat("Estado: %s", nomeEstado), 12, 36, 20, BLACK);
+    DrawText(TextFormat("Estado: %s", nomeEstado), 12, 92, 18, BLACK);
     DrawText(
-        "WASD mover | Mouse olhar | Shift correr | Espaco pular",
-        12, 62, 18, DARKGRAY
+        "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
+        12, GetScreenHeight() - 50, 18, BLACK
     );
-    DrawText("ESC pausa | F2 alterna combate (teste)", 12, 84, 18, DARKGRAY);
+    DrawText(
+        "ESC pausa | F2 encerra o combate (teste)",
+        12, GetScreenHeight() - 28, 18, BLACK
+    );
     DrawFPS(12, 12);
 }
 

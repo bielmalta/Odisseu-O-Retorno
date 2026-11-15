@@ -71,6 +71,18 @@ void inicializarJogador(Jogador *jogador, Vector3 posicaoInicial, float yaw) {
     sincronizarCamera(jogador);
 }
 
+void posicionarJogadorOlhando(Jogador *jogador, Vector3 posicao, Vector3 alvo) {
+    jogador->posicao = posicao;
+    jogador->velocidadeVertical = 0.0f;
+
+    float dx = alvo.x - posicao.x;
+    float dy = alvo.y - (posicao.y + JOGADOR_ALTURA_OLHOS);
+    float dz = alvo.z - posicao.z;
+    jogador->yaw = atan2f(dx, -dz);
+    jogador->pitch = atan2f(dy, sqrtf(dx * dx + dz * dz));
+    sincronizarCamera(jogador);
+}
+
 void definirControleJogador(Jogador *jogador, bool ativo) {
     if (jogador->controleAtivo == ativo) return;
     jogador->controleAtivo = ativo;
