@@ -54,4 +54,30 @@ void registrarMensagemPainel(PainelCombate *painel, const char *texto);
  * cada ataque, defesa e derrota em mensagem. `contexto` e o PainelCombate. */
 void observarEventoPainel(const EventoCombate *evento, void *contexto);
 
+/* ---- Ordem de turnos ---- */
+
+/* Odisseu e todos os inimigos que cabem no painel. */
+#define PAINEL_MAX_TURNOS (PAINEL_MAX_INIMIGOS + 1)
+
+typedef enum {
+    TURNO_JA_AGIU,    /* antes do participante da vez, nesta rodada */
+    TURNO_ATUAL,      /* e a vez dele (ou acabou de agir, ate a vez passar) */
+    TURNO_AGUARDANDO  /* ainda nao agiu nesta rodada */
+} SituacaoTurno;
+
+typedef struct {
+    const Personagem *personagem;
+    SituacaoTurno situacao;
+} TurnoPainel;
+
+/* Le a ordem da rodada direto da lista circular de turnos (a mesma ordem em
+ * que avancarTurno() percorre os nos a partir de `inicio`) e marca quem ja
+ * agiu, quem esta na vez e quem espera. Como a ordem e lida da lista a cada
+ * chamada, ela acompanha o QuickSort do inicio da rodada e a remocao dos
+ * derrotados sem nenhuma copia para manter em dia.
+ * Escreve ate `capacidade` entradas (no maximo PAINEL_MAX_TURNOS) e devolve
+ * quantas escreveu. Entre rodadas, sem participante da vez, todos aparecem
+ * como TURNO_AGUARDANDO. */
+int montarOrdemTurnos(const Combate *combate, TurnoPainel *saida, int capacidade);
+
 #endif

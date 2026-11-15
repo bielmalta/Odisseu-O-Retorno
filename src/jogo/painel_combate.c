@@ -112,6 +112,43 @@ void registrarMensagemPainel(PainelCombate *painel, const char *texto)
     painel->quantidadeMensagens++;
 }
 
+int montarOrdemTurnos(const Combate *combate, TurnoPainel *saida, int capacidade)
+{
+    Personagem *ordem[PAINEL_MAX_TURNOS];
+    int quantidade;
+    int posicaoDaVez = -1;
+
+    if (combate == NULL || saida == NULL || capacidade <= 0) {
+        return 0;
+    }
+
+    quantidade = percorrerParticipantes(
+        &combate->turnos, ordem,
+        capacidade < PAINEL_MAX_TURNOS ? capacidade : PAINEL_MAX_TURNOS
+    );
+
+    for (int i = 0; i < quantidade; i++) {
+        if (combate->participanteAtual != NULL &&
+            ordem[i] == combate->participanteAtual) {
+            posicaoDaVez = i;
+        }
+    }
+
+    for (int i = 0; i < quantidade; i++) {
+        saida[i].personagem = ordem[i];
+
+        if (posicaoDaVez < 0 || i > posicaoDaVez) {
+            saida[i].situacao = TURNO_AGUARDANDO;
+        } else if (i == posicaoDaVez) {
+            saida[i].situacao = TURNO_ATUAL;
+        } else {
+            saida[i].situacao = TURNO_JA_AGIU;
+        }
+    }
+
+    return quantidade;
+}
+
 void observarEventoPainel(const EventoCombate *evento, void *contexto)
 {
     PainelCombate *painel = contexto;

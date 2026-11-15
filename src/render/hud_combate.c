@@ -15,10 +15,14 @@ enum {
     TOPO_PAINEL_INIMIGOS = 62,
     LARGURA_PAINEL_JOGADOR = 320,
     ALTURA_PAINEL_JOGADOR = 72,
-    LARGURA_BOTAO_RESULTADO = 300
+    LARGURA_BOTAO_RESULTADO = 300,
+    TOPO_ORDEM_TURNOS = 88,
+    LARGURA_FICHA_TURNO = 118,
+    ALTURA_FICHA_TURNO = 40,
+    ESPACO_FICHAS_TURNO = 6
 };
 
-#define ALTURA_MARCADOR_ALVO 6.0f /* acima dos pes do inimigo */
+#define ALTURA_MARCADOR_ALVO 5.6f /* acima dos pes do inimigo */
 
 /* ---- Posicoes (usadas tanto para desenhar quanto para clicar) ---- */
 
@@ -312,6 +316,71 @@ static void desenharTurno(const Combate *combate, int largura)
     }
 }
 
+static void desenharFichaTurno(const TurnoPainel *turno, Rectangle ficha)
+{
+    const Personagem *personagem = turno->personagem;
+    const bool atual = turno->situacao == TURNO_ATUAL;
+    const bool jaAgiu = turno->situacao == TURNO_JA_AGIU;
+    Color fundo = personagem->tipo == TIPO_HEROI ? (Color){ 50, 90, 150, 235 }
+                                                 : (Color){ 140, 60, 50, 235 };
+    const char *marca = atual ? "AGORA" : (jaAgiu ? "agiu" : NULL);
+
+    if (jaAgiu) {
+        fundo = Fade(fundo, 0.45f);
+    }
+
+    DrawRectangleRec(ficha, fundo);
+    DrawRectangleLinesEx(ficha, atual ? 3.0f : 1.0f, atual ? GOLD : BLACK);
+
+    desenharTexto(
+        personagem->nome, (int)ficha.x + 8, (int)ficha.y + 4, 16,
+        jaAgiu ? LIGHTGRAY : WHITE
+    );
+    desenharTexto(
+        TextFormat("ini %d", personagem->iniciativa),
+        (int)ficha.x + 8, (int)ficha.y + 23, 12, jaAgiu ? GRAY : LIGHTGRAY
+    );
+
+    if (marca != NULL) {
+        desenharTexto(
+            marca, (int)(ficha.x + ficha.width) - MeasureText(marca, 12) - 8,
+            (int)ficha.y + 23, 12, atual ? GOLD : GRAY
+        );
+    }
+}
+
+/* Ordem da rodada, lida da lista circular a cada quadro: acompanha o
+ * QuickSort e as remocoes sozinha. */
+static void desenharOrdemTurnos(const Combate *combate, int largura)
+{
+    TurnoPainel ordem[PAINEL_MAX_TURNOS];
+    const int quantidade = montarOrdemTurnos(combate, ordem, PAINEL_MAX_TURNOS);
+    const char *titulo = "Ordem dos turnos";
+    const int total = quantidade * LARGURA_FICHA_TURNO +
+                      (quantidade - 1) * ESPACO_FICHAS_TURNO;
+
+    if (quantidade == 0) {
+        return;
+    }
+
+    desenharTexto(
+        titulo, (largura - MeasureText(titulo, 14)) / 2,
+        TOPO_ORDEM_TURNOS - 18, 14, WHITE
+    );
+
+    for (int i = 0; i < quantidade; i++) {
+        desenharFichaTurno(
+            &ordem[i],
+            (Rectangle){
+                (float)((largura - total) / 2 +
+                        i * (LARGURA_FICHA_TURNO + ESPACO_FICHAS_TURNO)),
+                (float)TOPO_ORDEM_TURNOS,
+                (float)LARGURA_FICHA_TURNO, (float)ALTURA_FICHA_TURNO
+            }
+        );
+    }
+}
+
 /* Seta sobre a cabeca do inimigo selecionado, no mundo 3D. */
 static void desenharMarcadorAlvo(
     const PainelCombate *painel, const Fase *fase, Camera3D camera
@@ -397,6 +466,7 @@ void desenharHudCombate(
     }
 
     desenharTurno(combate, largura);
+    desenharOrdemTurnos(combate, largura);
     desenharInimigos(painel, largura);
     desenharPersonagem(
         combate->jogador, retanguloPainelJogador(altura), false
