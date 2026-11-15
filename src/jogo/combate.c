@@ -1,5 +1,6 @@
 
 #include "combate.h"
+#include "ia_inimigo.h"
 #include "quicksort.h"
 
 #include <stdio.h>
@@ -291,8 +292,8 @@ void atualizarCombate(Combate *combate)
             break;
 
         case COMBATE_ENEMY_TURN:
-            /* Acao provisoria ate o commit de IA dos inimigos. */
-            concluirAcaoCombate(combate);
+            /* O inimigo decide e age sozinho (ia_inimigo.c). */
+            executarTurnoInimigo(combate);
             break;
 
         case COMBATE_RESOLVING:
