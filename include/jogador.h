@@ -18,6 +18,22 @@
 #define JOGADOR_SENSIBILIDADE 0.0025f /* radianos por pixel do mouse */
 #define JOGADOR_PITCH_MAX 1.553f      /* ~89 graus */
 
+/* Duracao padrao da transicao da camera livre para o foco do combate. */
+#define JOGADOR_TRANSICAO_COMBATE 1.4f
+
+/* Deslocamento suave da camera ate um ponto, olhando para um alvo. */
+typedef struct TransicaoJogador {
+    bool ativa;
+    Vector3 posicaoInicial;
+    Vector3 posicaoFinal;
+    float yawInicial;
+    float yawFinal;
+    float pitchInicial;
+    float pitchFinal;
+    float tempo;
+    float duracao;
+} TransicaoJogador;
+
 typedef struct Jogador {
     Vector3 posicao;         /* posicao dos pes */
     float velocidadeVertical;
@@ -26,6 +42,7 @@ typedef struct Jogador {
     bool noChao;
     bool controleAtivo;      /* false: movimento e giro bloqueados */
     bool descartarMouse;     /* ignora o salto do mouse ao recapturar o cursor */
+    TransicaoJogador transicao;
     Camera3D camera;
 } Jogador;
 
@@ -41,8 +58,18 @@ typedef struct ComandosJogador {
 
 void inicializarJogador(Jogador *jogador, Vector3 posicaoInicial, float yaw);
 
-/* Coloca o jogador em `posicao` (pes) olhando para `alvo`. */
+/* Coloca o jogador em `posicao` (pes) olhando para `alvo`, de uma vez. */
 void posicionarJogadorOlhando(Jogador *jogador, Vector3 posicao, Vector3 alvo);
+
+/* Leva o jogador de onde ele esta ate `posicao`, olhando para `alvo`, em
+ * `duracao` segundos, com partida e chegada suaves. Enquanto dura, a entrada
+ * e a fisica ficam suspensas (atualizarJogador() so move a camera). Se ele ja
+ * estiver praticamente la, termina na hora. */
+void iniciarTransicaoJogador(
+    Jogador *jogador, Vector3 posicao, Vector3 alvo, float duracao
+);
+
+bool transicaoJogadorAtiva(const Jogador *jogador);
 
 /* Ativa/desativa o controle e captura/libera o cursor do mouse. */
 void definirControleJogador(Jogador *jogador, bool ativo);

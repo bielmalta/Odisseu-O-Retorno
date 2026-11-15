@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+#include "interpolacao.h"
+
 static Vector3 frenteHorizontal(float yaw) {
     return (Vector3){sinf(yaw), 0.0f, -cosf(yaw)};
 }
@@ -68,19 +70,81 @@ void inicializarJogador(Jogador *jogador, Vector3 posicaoInicial, float yaw) {
     jogador->noChao = false;
     jogador->controleAtivo = false;
     jogador->descartarMouse = false;
+    jogador->transicao = (TransicaoJogador){0};
     sincronizarCamera(jogador);
 }
 
-void posicionarJogadorOlhando(Jogador *jogador, Vector3 posicao, Vector3 alvo) {
-    jogador->posicao = posicao;
-    jogador->velocidadeVertical = 0.0f;
-
+/* yaw e pitch para quem esta em `posicao` (pes) olhar para `alvo`. */
+static void calcularOlhar(Vector3 posicao, Vector3 alvo, float *yaw, float *pitch) {
     float dx = alvo.x - posicao.x;
     float dy = alvo.y - (posicao.y + JOGADOR_ALTURA_OLHOS);
     float dz = alvo.z - posicao.z;
-    jogador->yaw = atan2f(dx, -dz);
-    jogador->pitch = atan2f(dy, sqrtf(dx * dx + dz * dz));
+    *yaw = atan2f(dx, -dz);
+    *pitch = atan2f(dy, sqrtf(dx * dx + dz * dz));
+}
+
+void posicionarJogadorOlhando(Jogador *jogador, Vector3 posicao, Vector3 alvo) {
+    jogador->transicao.ativa = false;
+    jogador->posicao = posicao;
+    jogador->velocidadeVertical = 0.0f;
+    calcularOlhar(posicao, alvo, &jogador->yaw, &jogador->pitch);
     sincronizarCamera(jogador);
+}
+
+void iniciarTransicaoJogador(Jogador *jogador, Vector3 posicao, Vector3 alvo,
+                             float duracao) {
+    TransicaoJogador *t = &jogador->transicao;
+    float yaw, pitch;
+    calcularOlhar(posicao, alvo, &yaw, &pitch);
+
+    float dx = posicao.x - jogador->posicao.x;
+    float dy = posicao.y - jogador->posicao.y;
+    float dz = posicao.z - jogador->posicao.z;
+    float distancia = sqrtf(dx * dx + dy * dy + dz * dz);
+
+    /* Ja esta (quase) no lugar e olhando para la: nada a animar. */
+    if (duracao <= 0.0f ||
+        (distancia < 0.05f && fabsf(diferencaAngulo(jogador->yaw, yaw)) < 0.02f &&
+         fabsf(pitch - jogador->pitch) < 0.02f)) {
+        posicionarJogadorOlhando(jogador, posicao, alvo);
+        return;
+    }
+
+    t->ativa = true;
+    t->posicaoInicial = jogador->posicao;
+    t->posicaoFinal = posicao;
+    t->yawInicial = jogador->yaw;
+    t->yawFinal = yaw;
+    t->pitchInicial = jogador->pitch;
+    t->pitchFinal = pitch;
+    t->tempo = 0.0f;
+    t->duracao = duracao;
+    jogador->velocidadeVertical = 0.0f;
+}
+
+bool transicaoJogadorAtiva(const Jogador *jogador) {
+    return jogador->transicao.ativa;
+}
+
+static void avancarTransicao(Jogador *jogador, float dt) {
+    TransicaoJogador *t = &jogador->transicao;
+
+    t->tempo += dt;
+    float p = suavizar(t->tempo / t->duracao);
+
+    jogador->posicao.x = interpolar(t->posicaoInicial.x, t->posicaoFinal.x, p);
+    jogador->posicao.y = interpolar(t->posicaoInicial.y, t->posicaoFinal.y, p);
+    jogador->posicao.z = interpolar(t->posicaoInicial.z, t->posicaoFinal.z, p);
+    jogador->yaw = interpolarAngulo(t->yawInicial, t->yawFinal, p);
+    jogador->pitch = interpolar(t->pitchInicial, t->pitchFinal, p);
+    jogador->velocidadeVertical = 0.0f;
+
+    if (t->tempo >= t->duracao) {
+        t->ativa = false;
+        jogador->posicao = t->posicaoFinal;
+        jogador->yaw = t->yawFinal;
+        jogador->pitch = t->pitchFinal;
+    }
 }
 
 void definirControleJogador(Jogador *jogador, bool ativo) {
@@ -110,6 +174,13 @@ ComandosJogador lerComandosJogador(void) {
 
 void atualizarJogador(Jogador *jogador, ComandosJogador comandos,
                       const BoundingBox *obstaculos, int quantidade, float dt) {
+    /* Transicao de camera: so ela move o jogador, sem entrada nem fisica. */
+    if (jogador->transicao.ativa) {
+        avancarTransicao(jogador, dt);
+        sincronizarCamera(jogador);
+        return;
+    }
+
     /* Controle bloqueado (menu/combate): descarta toda a entrada, mas a
      * gravidade continua valendo para nao deixar o jogador flutuando. */
     if (!jogador->controleAtivo) comandos = (ComandosJogador){0};

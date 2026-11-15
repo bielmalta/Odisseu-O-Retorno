@@ -140,6 +140,21 @@ tests/
 - `assets`: modelos, texturas, fontes e arquivos de áudio.
 - `tests`: testes das estruturas de dados e regras do jogo.
 
+### Animações, câmera e sons do combate
+
+O dano é sempre resolvido pela lógica (`acoes_combate`), no instante da ação. O módulo `animacao_combate`, em C puro, só conta o tempo do que a tela mostra: cada ataque ou defesa passa por começo, impacto e retorno, e o combate espera a animação terminar antes de passar o turno. A barra de vida cai no impacto, a mensagem aparece junto e a tela de vitória ou derrota só surge depois do golpe final e da queda.
+
+Na tela, a câmera vai suavemente do modo livre até o foco do combate, e Odisseu aparece em primeira pessoa com lança e escudo. O inimigo investe, recua, se abaixa na defesa e tomba ao ser derrotado, e há tremor de câmera e vinheta ao receber um golpe.
+
+Os efeitos sonoros de `assets/audio` (golpe, impacto, bloqueio, defesa e queda) foram gerados por síntese, sem amostras de terceiros. Para recriá-los:
+
+```bash
+gcc -std=c11 tools/gerar_sons.c -o gerar_sons -lm
+./gerar_sons assets/audio
+```
+
+Sem placa de som ou sem esses arquivos, o jogo segue normalmente, em silêncio.
+
 ### Convenções de programação
 
 O projeto seguirá as seguintes convenções:

@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stddef.h>
 
+#include "fase_render.h"
+
 enum {
     MARGEM = 12,
     LARGURA_BOTAO = 170,
@@ -22,7 +24,7 @@ enum {
     ESPACO_FICHAS_TURNO = 6
 };
 
-#define ALTURA_MARCADOR_ALVO 5.6f /* acima dos pes do inimigo */
+#define ALTURA_MARCADOR_ALVO 5.4f /* acima dos pes do inimigo */
 
 /* ---- Posicoes (usadas tanto para desenhar quanto para clicar) ---- */
 
@@ -193,10 +195,10 @@ static void desenharBarraVida(Rectangle area, int vida, int vidaMaxima)
 }
 
 static void desenharPersonagem(
-    const Personagem *personagem, Rectangle area, bool selecionado
+    const Personagem *personagem, int vida, Rectangle area, bool selecionado
 )
 {
-    const bool derrotado = !personagemVivo(personagem);
+    const bool derrotado = vida <= 0;
     const Color fundo = derrotado ? (Color){ 50, 50, 50, 170 }
                                   : (Color){ 0, 0, 0, 140 };
 
@@ -223,11 +225,13 @@ static void desenharPersonagem(
 
     desenharBarraVida(
         (Rectangle){ area.x + 8, area.y + area.height - 24, area.width - 16, 18 },
-        personagem->vida, personagem->vidaMaxima
+        vida, personagem->vidaMaxima
     );
 }
 
-static void desenharInimigos(const PainelCombate *painel, int largura)
+static void desenharInimigos(
+    const PainelCombate *painel, const AnimacaoCombate *animacao, int largura
+)
 {
     desenharTexto(
         "Inimigos", largura - MARGEM - LARGURA_PAINEL_INIMIGOS,
@@ -236,8 +240,8 @@ static void desenharInimigos(const PainelCombate *painel, int largura)
 
     for (int i = 0; i < painel->quantidadeInimigos; i++) {
         desenharPersonagem(
-            painel->inimigos[i], retanguloInimigo(i, largura),
-            painel->inimigos[i] == painel->alvo
+            painel->inimigos[i], vidaExibida(animacao, painel->inimigos[i]),
+            retanguloInimigo(i, largura), painel->inimigos[i] == painel->alvo
         );
     }
 }
@@ -383,12 +387,15 @@ static void desenharOrdemTurnos(const Combate *combate, int largura)
 
 /* Seta sobre a cabeca do inimigo selecionado, no mundo 3D. */
 static void desenharMarcadorAlvo(
-    const PainelCombate *painel, const Fase *fase, Camera3D camera
+    const PainelCombate *painel, const Fase *fase, Camera3D camera,
+    const AnimacaoCombate *animacao
 )
 {
     for (int i = 0; i < painel->quantidadeInimigos &&
                     i < fase->quantidadeInimigos; i++) {
-        Vector3 ancora = fase->pontosInimigos[i];
+        /* Acompanha o inimigo quando ele investe ou recua. */
+        const PoseInimigo pose = poseDoInimigo(animacao, painel->inimigos[i]);
+        Vector3 ancora = posicaoInimigoComPose(fase, i, &pose);
         const Vector3 frente = {
             camera.target.x - camera.position.x,
             camera.target.y - camera.position.y,
@@ -451,7 +458,8 @@ void desenharHudCombate(
     const PainelCombate *painel,
     const Combate *combate,
     const Fase *fase,
-    Camera3D camera
+    Camera3D camera,
+    const AnimacaoCombate *animacao
 )
 {
     const int largura = GetScreenWidth();
@@ -462,14 +470,15 @@ void desenharHudCombate(
     }
 
     if (!combateAcabou(combate)) {
-        desenharMarcadorAlvo(painel, fase, camera);
+        desenharMarcadorAlvo(painel, fase, camera, animacao);
     }
 
     desenharTurno(combate, largura);
     desenharOrdemTurnos(combate, largura);
-    desenharInimigos(painel, largura);
+    desenharInimigos(painel, animacao, largura);
     desenharPersonagem(
-        combate->jogador, retanguloPainelJogador(altura), false
+        combate->jogador, vidaExibida(animacao, combate->jogador),
+        retanguloPainelJogador(altura), false
     );
     desenharMensagens(painel, altura);
     desenharBotoes(painel, combate, largura, altura);
@@ -479,7 +488,8 @@ void desenharHudCombate(
         MARGEM, altura - 28, 18, WHITE
     );
 
-    if (combateAcabou(combate)) {
+    /* O resultado espera o golpe final acertar e o derrotado tombar. */
+    if (combateAcabou(combate) && !animacaoCombateOcupada(animacao)) {
         desenharResultado(combate, largura, altura);
     }
 }

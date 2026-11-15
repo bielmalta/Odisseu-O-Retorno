@@ -5,6 +5,7 @@
 
 #include "raylib.h"
 
+#include "animacao_combate.h"
 #include "combate.h"
 #include "fase.h"
 #include "painel_combate.h"
@@ -48,12 +49,15 @@ ComandoCombate interpretarEntradaCombate(
     int altura
 );
 
-/* Desenha o HUD de combate (2D, depois de EndMode3D). */
+/* Desenha o HUD de combate (2D, depois de EndMode3D). `animacao` sincroniza o
+ * HUD com a tela: a barra de vida so cai no impacto do golpe, e a tela de
+ * vitoria ou derrota so aparece depois que a animacao termina. */
 void desenharHudCombate(
     const PainelCombate *painel,
     const Combate *combate,
     const Fase *fase,
-    Camera3D camera
+    Camera3D camera,
+    const AnimacaoCombate *animacao
 );
 
 #endif

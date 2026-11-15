@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "raylib.h"
@@ -7,7 +8,10 @@
 #include "fase_render.h"
 #include "jogador.h"
 #include "acoes_combate.h"
+#include "animacao_combate.h"
+#include "audio_combate.h"
 #include "combate.h"
+#include "efeitos_combate.h"
 #include "hud_combate.h"
 #include "ia_inimigo.h"
 #include "painel_combate.h"
@@ -28,6 +32,8 @@ static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 static Combate combate;
 static EsperaTurnoInimigo esperaInimigo;
 static PainelCombate painel; /* dados mostrados pelo HUD de combate */
+static AnimacaoCombate animacao; /* tempo das acoes vistas na tela */
+static EfeitosSonoros sons;
 
 static Personagem odisseu;
 static Personagem polifemo;
@@ -47,10 +53,8 @@ static void definirEstado(EstadoJogo novoEstado)
     aplicarEstado();
 }
 
-/* O objetivo foi cumprido: coloca Odisseu de frente para o inimigo e
- * entra em combate (movimento bloqueado). A transicao suave da camera
- * fica para o commit 19. */
-
+/* O objetivo foi cumprido: entra em combate (movimento bloqueado) e a camera
+ * vai suavemente ate o foco, de frente para o inimigo. */
 static void iniciarConfronto(void)
 {
     Vector3 alvo = fase.pontosInimigos[0];
@@ -69,12 +73,14 @@ static void iniciarConfronto(void)
     /* O HUD le os inimigos agora, antes de a lista ser ordenada. */
     iniciarPainelCombate(&painel, &combate);
     iniciarEsperaTurnoInimigo(&esperaInimigo);
+    iniciarAnimacaoCombate(&animacao);
 
-    /* Posiciona a camera diante do inimigo. */
-    posicionarJogadorOlhando(
+    /* Da camera livre ao foco diante do inimigo, sem corte. */
+    iniciarTransicaoJogador(
         &jogador,
         fase.pontoJogadorConfronto,
-        alvo
+        alvo,
+        JOGADOR_TRANSICAO_COMBATE
     );
 
     definirEstado(ESTADO_COMBATE);
@@ -125,17 +131,51 @@ static void inicializarJogo(void)
     iniciarEsperaTurnoInimigo(&esperaInimigo);
     criarParticipantes();
 
-    /* O HUD recebe cada ataque e defesa como mensagem. */
-    registrarObservadorCombate(observarEventoPainel, &painel);
+    /* Cada ataque e defesa vira uma animacao; sons e mensagens saem nos
+     * marcos dela. O dano ja foi resolvido pela logica nesse instante. */
+    iniciarAnimacaoCombate(&animacao);
+    registrarObservadorCombate(observarEventoAnimacao, &animacao);
+    iniciarAudioCombate(&sons);
 
     definirEstado(ESTADO_EXPLORACAO);
 }
 
-/* Um quadro de combate: turnos, entrada do jogador e resultado. */
+/* Avanca a animacao e reage aos marcos: toca o som e, no impacto ou na
+ * defesa, publica a mensagem da acao no mesmo instante. */
+static void processarMarcosDaAnimacao(float deltaTempo)
+{
+    CueAnimacao cues[8];
+    const int quantidade = atualizarAnimacaoCombate(
+        &animacao, deltaTempo, cues, 8
+    );
+
+    for (int i = 0; i < quantidade; i++) {
+        tocarCue(&sons, &cues[i]);
+
+        if (cues[i].tipo == CUE_IMPACTO || cues[i].tipo == CUE_DEFESA_ATIVADA) {
+            observarEventoPainel(&cues[i].evento, &painel);
+        }
+    }
+}
+
+/* Um quadro de combate: animacao, turnos, entrada do jogador e resultado. */
 static void atualizarConfronto(float deltaTempo)
 {
-    /* No turno do inimigo, espera um instante para a acao ficar visivel. */
-    if (aguardarTurnoInimigo(&esperaInimigo, &combate, deltaTempo)) {
+    bool animando;
+
+    processarMarcosDaAnimacao(deltaTempo);
+
+    /* A camera ainda vai para o foco: o combate so comeca quando ela chega. */
+    if (transicaoJogadorAtiva(&jogador)) {
+        return;
+    }
+
+    animando = animacaoCombateOcupada(&animacao);
+
+    /* O turno seguinte espera a acao terminar de aparecer na tela. O dano ja
+     * foi resolvido; a animacao e curta, entao os turnos nunca travam. No
+     * turno do inimigo ainda ha uma pausa antes de ele agir. */
+    if (!animando && aguardarTurnoInimigo(&esperaInimigo, &combate, deltaTempo)) {
         atualizarCombate(&combate);
     }
 
@@ -152,6 +192,9 @@ static void atualizarConfronto(float deltaTempo)
         defenderNoCombate(&combate);
         break;
     case COMANDO_CONTINUAR:
+        if (animando) {
+            break; /* o golpe final ainda esta acontecendo */
+        }
         if (combate.estado == COMBATE_VICTORY) {
             concluirConfronto();
         } else {
@@ -208,25 +251,43 @@ static void atualizarJogo(float deltaTempo)
 static void desenharJogo(void)
 {
     const char *nomeEstado = "EXPLORACAO";
+    const bool combatendo = estadoAtual == ESTADO_COMBATE;
+    PoseJogador poseJogador = {0};
+    PoseInimigo posesInimigos[FASE_MAX_INIMIGOS] = {0};
+    Camera3D camera = jogador.camera;
 
-    if (estadoAtual == ESTADO_COMBATE) {
+    if (combatendo) {
         nomeEstado = "COMBATE";
+        poseJogador = poseDoJogador(&animacao, &odisseu);
+        for (int i = 0; i < fase.quantidadeInimigos &&
+                        i < painel.quantidadeInimigos; i++) {
+            posesInimigos[i] = poseDoInimigo(&animacao, painel.inimigos[i]);
+        }
+        camera = camaraComEfeitos(jogador.camera, &poseJogador, (float)GetTime());
     } else if (estadoAtual == ESTADO_PAUSA) {
         nomeEstado = "PAUSA";
     }
 
     ClearBackground((Color){ 135, 180, 220, 255 });
 
-    BeginMode3D(jogador.camera);
-    desenharFase(&fase);
+    BeginMode3D(camera);
+    desenharFase(&fase, combatendo ? posesInimigos : NULL);
+    if (combatendo) {
+        desenharArmasJogador(camera, &poseJogador);
+    }
     EndMode3D();
 
     desenharHudFase(&fase);
 
     DrawText(TextFormat("Estado: %s", nomeEstado), 12, 92, 18, BLACK);
 
-    if (estadoAtual == ESTADO_COMBATE) {
-        desenharHudCombate(&painel, &combate, &fase, jogador.camera);
+    if (combatendo) {
+        desenharEfeitosTela(&poseJogador, GetScreenWidth(), GetScreenHeight());
+
+        /* O HUD de combate aparece quando a camera chega ao foco. */
+        if (!transicaoJogadorAtiva(&jogador)) {
+            desenharHudCombate(&painel, &combate, &fase, camera, &animacao);
+        }
     } else {
         DrawText(
             "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
@@ -246,6 +307,7 @@ static void finalizarJogo(void)
 
     /* Libera os nós da lista circular ao fechar o jogo. */
     finalizarCombate(&combate);
+    encerrarAudioCombate(&sons);
 }
 
 
@@ -261,7 +323,13 @@ int main(void)
     inicializarJogo();
 
     while (!WindowShouldClose()) {
-        atualizarJogo(GetFrameTime());
+        /* Um quadro muito longo (janela arrastada) nao pode pular animacoes. */
+        float deltaTempo = GetFrameTime();
+
+        if (deltaTempo > 0.1f) {
+            deltaTempo = 0.1f;
+        }
+        atualizarJogo(deltaTempo);
 
         BeginDrawing();
         desenharJogo();
