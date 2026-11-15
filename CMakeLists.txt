@@ -102,3 +102,10 @@ else()
 endif()
 
 target_link_libraries(odisseu_o_retorno PRIVATE odisseu_core)
+
+
+enable_testing()
+
+add_executable(teste_lista_turnos tests/teste_lista_turnos.c)
+target_link_libraries(teste_lista_turnos PRIVATE odisseu_core)
+add_test(NAME lista_turnos COMMAND teste_lista_turnos)
