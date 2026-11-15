@@ -42,6 +42,9 @@ bool prepararCombate(
 /* Atualiza a maquina de estados do combate. */
 void atualizarCombate(Combate *combate);
 
+/* Remove inimigos derrotados e informa se o combate terminou. */
+bool verificarFimCombate(Combate *combate);
+
 /* Finaliza a acao do participante atual. */
 void concluirAcaoCombate(Combate *combate);
 

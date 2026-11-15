@@ -112,6 +112,108 @@ static void iniciarRodada(Combate *combate)
     }
 }
 
+static bool participanteJaAgiu(
+    const Combate *combate,
+    const Personagem *personagem
+)
+{
+    NoTurno *no;
+    int quantidade;
+
+    if (combate->turnos.atual == NULL ||
+        combate->turnosConcluidos <= 0) {
+        return false;
+    }
+
+    no = combate->turnos.atual;
+    quantidade = combate->turnosConcluidos;
+
+    /* Em RESOLVING, o participante atual ja concluiu sua acao. */
+    if (combate->estado != COMBATE_RESOLVING) {
+        no = no->anterior;
+    }
+
+    for (int i = 0; i < quantidade; i++) {
+        if (no->personagem == personagem) {
+            return true;
+        }
+
+        no = no->anterior;
+    }
+
+    return false;
+}
+
+bool verificarFimCombate(Combate *combate)
+{
+    NoTurno *no;
+    int quantidadeOriginal;
+    int inimigosRestantes = 0;
+
+    if (combate == NULL || combate->jogador == NULL) {
+        return false;
+    }
+
+    if (combate->estado == COMBATE_VICTORY ||
+        combate->estado == COMBATE_DEFEAT) {
+        return true;
+    }
+
+    if (!personagemVivo(combate->jogador)) {
+        combate->participanteAtual = NULL;
+        combate->estado = COMBATE_DEFEAT;
+        printf("[COMBATE] Odisseu foi derrotado.\n");
+        return true;
+    }
+
+    no = combate->turnos.inicio;
+    quantidadeOriginal = combate->turnos.tamanho;
+
+    for (int i = 0; i < quantidadeOriginal; i++) {
+        NoTurno *proximo = no->proximo;
+        Personagem *personagem = no->personagem;
+
+        if (personagem->tipo == TIPO_INIMIGO) {
+            if (personagemVivo(personagem)) {
+                inimigosRestantes++;
+            } else {
+                bool eraParticipanteAtual =
+                    personagem == combate->participanteAtual;
+
+                if (participanteJaAgiu(combate, personagem) &&
+                    combate->turnosConcluidos > 0) {
+                    combate->turnosConcluidos--;
+                }
+
+                printf("[COMBATE] %s foi removido da ordem de turnos.\n",
+                       personagem->nome);
+                removerPersonagem(&combate->turnos, personagem);
+
+                if (eraParticipanteAtual) {
+                    combate->participanteAtual =
+                        personagemDaVez(&combate->turnos);
+
+                    if (combate->estado == COMBATE_WAITING_PLAYER ||
+                        combate->estado == COMBATE_ENEMY_TURN) {
+                        combate->estado = COMBATE_RESOLVING;
+                    }
+                }
+            }
+        }
+
+        no = proximo;
+    }
+
+    if (inimigosRestantes == 0) {
+        combate->participanteAtual = NULL;
+        combate->estado = COMBATE_VICTORY;
+        printf("[COMBATE] Todos os inimigos foram derrotados.\n");
+        return true;
+    }
+
+    return false;
+}
+
 void concluirAcaoCombate(Combate *combate)
 {
     if (combate == NULL || combate->participanteAtual == NULL) {
@@ -120,6 +222,15 @@ void concluirAcaoCombate(Combate *combate)
 
     if (combate->estado != COMBATE_WAITING_PLAYER &&
         combate->estado != COMBATE_ENEMY_TURN) {
+        return;
+    }
+
+    if (verificarFimCombate(combate)) {
+        return;
+    }
+
+    /* A remocao do participante atual muda o estado para RESOLVING. */
+    if (combate->estado == COMBATE_RESOLVING) {
         return;
     }
 
@@ -133,6 +244,10 @@ void concluirAcaoCombate(Combate *combate)
 
 static void resolverTurno(Combate *combate)
 {
+    if (verificarFimCombate(combate)) {
+        return;
+    }
+
     if (combate->turnosConcluidos >= combate->turnos.tamanho) {
         printf("[COMBATE] Rodada %u concluida.\n",
                combate->rodada);
@@ -155,6 +270,10 @@ static void resolverTurno(Combate *combate)
 void atualizarCombate(Combate *combate)
 {
     if (combate == NULL) {
+        return;
+    }
+
+    if (verificarFimCombate(combate)) {
         return;
     }
 
@@ -182,7 +301,7 @@ void atualizarCombate(Combate *combate)
 
         case COMBATE_VICTORY:
         case COMBATE_DEFEAT:
-            /* Resultado sera determinado no commit 14. */
+            /* Entradas de combate ficam bloqueadas apos o resultado. */
             break;
     }
 }
