@@ -34,6 +34,7 @@ Personagem criarPersonagem(
     personagem.ataque = naoNegativo(ataque);
     personagem.defesa = naoNegativo(defesa);
     personagem.iniciativa = naoNegativo(iniciativa);
+    personagem.bonusDefesa = 0;
 
     return personagem;
 }

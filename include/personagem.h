@@ -16,6 +16,7 @@ typedef struct {
     int ataque;
     int defesa;
     int iniciativa;
+    int bonusDefesa; /* reducao temporaria do proximo dano (ver acoes_combate.h) */
 } Personagem;
 
 Personagem criarPersonagem(
