@@ -89,6 +89,7 @@ add_library(
         src/estruturas/quicksort.c
         src/jogo/combate.c
         src/jogo/acoes_combate.c
+        src/jogo/ia_inimigo.c
 )
 
 target_include_directories(
@@ -123,3 +124,7 @@ add_test(NAME combate COMMAND teste_combate)
 add_executable(teste_acoes_combate tests/teste_acoes_combate.c)
 target_link_libraries(teste_acoes_combate PRIVATE odisseu_core)
 add_test(NAME acoes_combate COMMAND teste_acoes_combate)
+
+add_executable(teste_ia_inimigo tests/teste_ia_inimigo.c)
+target_link_libraries(teste_ia_inimigo PRIVATE odisseu_core)
+add_test(NAME ia_inimigo COMMAND teste_ia_inimigo)

@@ -5,6 +5,7 @@
 #include "fase_render.h"
 #include "jogador.h"
 #include "combate.h"
+#include "ia_inimigo.h"
 #include "personagem.h"
 
 enum {
@@ -20,6 +21,7 @@ static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
 /* Controlador de combate e participantes do encontro inicial. */
 static Combate combate;
+static EsperaTurnoInimigo esperaInimigo;
 
 static Personagem odisseu;
 static Personagem polifemo;
@@ -82,6 +84,7 @@ static void inicializarJogo(void)
 
     /* Inicializa o controlador de combate. */
     inicializarCombate(&combate);
+    iniciarEsperaTurnoInimigo(&esperaInimigo);
 
     /* Cria os participantes do primeiro encontro. */
     odisseu = criarPersonagem(
@@ -115,8 +118,11 @@ static void atualizarJogo(float deltaTempo)
             encerrarConfronto(&fase);
             definirEstado(ESTADO_EXPLORACAO);
         } else {
-            /* Atualiza a máquina de estados do combate. */
-            atualizarCombate(&combate);
+            /* Atualiza a máquina de estados do combate. No turno do
+             * inimigo, espera um instante para a ação ficar visível. */
+            if (aguardarTurnoInimigo(&esperaInimigo, &combate, deltaTempo)) {
+                atualizarCombate(&combate);
+            }
 
             /* O jogador só pode agir durante seu próprio turno. */
             if (combate.estado == COMBATE_WAITING_PLAYER &&
