@@ -48,6 +48,7 @@ add_executable(
     src/jogo/cenario.c
     src/jogo/fase.c
     src/render/fase_render.c
+    src/render/hud_combate.c
     src/render/jogador.c
 )
 
@@ -90,6 +91,7 @@ add_library(
         src/jogo/combate.c
         src/jogo/acoes_combate.c
         src/jogo/ia_inimigo.c
+        src/jogo/painel_combate.c
 )
 
 target_include_directories(
@@ -132,3 +134,7 @@ add_test(NAME ia_inimigo COMMAND teste_ia_inimigo)
 add_executable(teste_cenarios_combate tests/teste_cenarios_combate.c)
 target_link_libraries(teste_cenarios_combate PRIVATE odisseu_core)
 add_test(NAME cenarios_combate COMMAND teste_cenarios_combate)
+
+add_executable(teste_painel_combate tests/teste_painel_combate.c)
+target_link_libraries(teste_painel_combate PRIVATE odisseu_core)
+add_test(NAME painel_combate COMMAND teste_painel_combate)

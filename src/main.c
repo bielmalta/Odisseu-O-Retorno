@@ -1,11 +1,16 @@
+#include <stddef.h>
+
 #include "raylib.h"
 
 #include "estado_jogo.h"
 #include "fase.h"
 #include "fase_render.h"
 #include "jogador.h"
+#include "acoes_combate.h"
 #include "combate.h"
+#include "hud_combate.h"
 #include "ia_inimigo.h"
+#include "painel_combate.h"
 #include "personagem.h"
 
 enum {
@@ -22,6 +27,7 @@ static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 /* Controlador de combate e participantes do encontro inicial. */
 static Combate combate;
 static EsperaTurnoInimigo esperaInimigo;
+static PainelCombate painel; /* dados mostrados pelo HUD de combate */
 
 static Personagem odisseu;
 static Personagem polifemo;
@@ -60,6 +66,10 @@ static void iniciarConfronto(void)
         return;
     }
 
+    /* O HUD le os inimigos agora, antes de a lista ser ordenada. */
+    iniciarPainelCombate(&painel, &combate);
+    iniciarEsperaTurnoInimigo(&esperaInimigo);
+
     /* Posiciona a camera diante do inimigo. */
     posicionarJogadorOlhando(
         &jogador,
@@ -72,7 +82,35 @@ static void iniciarConfronto(void)
     TraceLog(LOG_INFO, "Combate contra Polifemo iniciado.");
 }
 
+/* Cria os participantes do primeiro encontro, com a vida cheia. */
+static void criarParticipantes(void)
+{
+    odisseu = criarPersonagem(
+        "Odisseu", TIPO_HEROI, 100, 20, 10, 12
+    );
 
+    polifemo = criarPersonagem(
+        "Polifemo", TIPO_INIMIGO, 120, 25, 8, 8
+    );
+
+    inimigosCombate[0] = &polifemo;
+}
+
+/* Vitoria confirmada: libera a saida e volta a explorar. */
+static void concluirConfronto(void)
+{
+    finalizarCombate(&combate);
+    encerrarConfronto(&fase);
+    definirEstado(ESTADO_EXPLORACAO);
+}
+
+/* Derrota confirmada: refaz o mesmo encontro, com a vida cheia. */
+static void reiniciarConfronto(void)
+{
+    finalizarCombate(&combate);
+    criarParticipantes();
+    iniciarConfronto();
+}
 
 static void inicializarJogo(void)
 {
@@ -85,19 +123,44 @@ static void inicializarJogo(void)
     /* Inicializa o controlador de combate. */
     inicializarCombate(&combate);
     iniciarEsperaTurnoInimigo(&esperaInimigo);
+    criarParticipantes();
 
-    /* Cria os participantes do primeiro encontro. */
-    odisseu = criarPersonagem(
-        "Odisseu", TIPO_HEROI, 100, 20, 10, 12
-    );
-
-    polifemo = criarPersonagem(
-        "Polifemo", TIPO_INIMIGO, 120, 25, 8, 8
-    );
-
-    inimigosCombate[0] = &polifemo;
+    /* O HUD recebe cada ataque e defesa como mensagem. */
+    registrarObservadorCombate(observarEventoPainel, &painel);
 
     definirEstado(ESTADO_EXPLORACAO);
+}
+
+/* Um quadro de combate: turnos, entrada do jogador e resultado. */
+static void atualizarConfronto(float deltaTempo)
+{
+    /* No turno do inimigo, espera um instante para a acao ficar visivel. */
+    if (aguardarTurnoInimigo(&esperaInimigo, &combate, deltaTempo)) {
+        atualizarCombate(&combate);
+    }
+
+    atualizarAlvoPainel(&painel);
+
+    switch (interpretarEntradaCombate(
+        &painel, &combate, lerEntradaCombate(),
+        GetScreenWidth(), GetScreenHeight()
+    )) {
+    case COMANDO_ATACAR:
+        atacarNoCombate(&combate, painel.alvo);
+        break;
+    case COMANDO_DEFENDER:
+        defenderNoCombate(&combate);
+        break;
+    case COMANDO_CONTINUAR:
+        if (combate.estado == COMBATE_VICTORY) {
+            concluirConfronto();
+        } else {
+            reiniciarConfronto();
+        }
+        break;
+    case COMANDO_NENHUM:
+        break;
+    }
 }
 
 
@@ -109,29 +172,9 @@ static void atualizarJogo(float deltaTempo)
         );
     }
 
-    
-/* Controla os turnos durante o confronto. */
     if (estadoAtual == ESTADO_COMBATE) {
-        if (IsKeyPressed(KEY_F2)) {
-            /* Encerramento provisório para testar a exploração. */
-            finalizarCombate(&combate);
-            encerrarConfronto(&fase);
-            definirEstado(ESTADO_EXPLORACAO);
-        } else {
-            /* Atualiza a máquina de estados do combate. No turno do
-             * inimigo, espera um instante para a ação ficar visível. */
-            if (aguardarTurnoInimigo(&esperaInimigo, &combate, deltaTempo)) {
-                atualizarCombate(&combate);
-            }
-
-            /* O jogador só pode agir durante seu próprio turno. */
-            if (combate.estado == COMBATE_WAITING_PLAYER &&
-                IsKeyPressed(KEY_ENTER)) {
-                concluirAcaoCombate(&combate);
-            }
-        }
+        atualizarConfronto(deltaTempo);
     }
-
 
     if (estadoAtual == ESTADO_EXPLORACAO && IsKeyPressed(KEY_E)) {
         interagir(&fase);
@@ -167,7 +210,7 @@ static void desenharJogo(void)
     const char *nomeEstado = "EXPLORACAO";
 
     if (estadoAtual == ESTADO_COMBATE) {
-        nomeEstado = "COMBATE (movimento bloqueado)";
+        nomeEstado = "COMBATE";
     } else if (estadoAtual == ESTADO_PAUSA) {
         nomeEstado = "PAUSA";
     }
@@ -181,15 +224,16 @@ static void desenharJogo(void)
     desenharHudFase(&fase);
 
     DrawText(TextFormat("Estado: %s", nomeEstado), 12, 92, 18, BLACK);
-    DrawText(
-        "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
-        12, GetScreenHeight() - 50, 18, BLACK
-    );
-    
-    DrawText(
-        "ESC pausa | ENTER confirma turno | F2 encerra combate (teste)",
-        12, GetScreenHeight() - 28, 18, BLACK
-    );
+
+    if (estadoAtual == ESTADO_COMBATE) {
+        desenharHudCombate(&painel, &combate, &fase, jogador.camera);
+    } else {
+        DrawText(
+            "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
+            12, GetScreenHeight() - 50, 18, BLACK
+        );
+        DrawText("ESC pausa e retoma", 12, GetScreenHeight() - 28, 18, BLACK);
+    }
 
     DrawFPS(12, 12);
 }
@@ -198,6 +242,7 @@ static void desenharJogo(void)
 static void finalizarJogo(void)
 {
     definirControleJogador(&jogador, false);
+    registrarObservadorCombate(NULL, NULL);
 
     /* Libera os nós da lista circular ao fechar o jogo. */
     finalizarCombate(&combate);

@@ -91,9 +91,11 @@ void desenharHudFase(const Fase *fase)
     const int centroX = largura / 2;
     const int centroY = altura / 2;
 
-    /* Mira central */
-    DrawLine(centroX - 8, centroY, centroX + 8, centroY, WHITE);
-    DrawLine(centroX, centroY - 8, centroX, centroY + 8, WHITE);
+    /* Mira central: so na exploracao; no confronto o cursor e livre. */
+    if (fase->etapa != ETAPA_CONFRONTO) {
+        DrawLine(centroX - 8, centroY, centroX + 8, centroY, WHITE);
+        DrawLine(centroX, centroY - 8, centroX, centroY + 8, WHITE);
+    }
 
     /* Titulo e objetivo */
     desenharTexto(fase->titulo, 12, 36, 20, WHITE);

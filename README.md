@@ -61,6 +61,13 @@ Em caso de derrota, o jogador poderá reiniciar o confronto.
 
 Durante os combates, o jogador poderá selecionar as ações de atacar e defender pela interface.
 
+| Controle no combate | Ação |
+|---|---|
+| A ou clique em **Atacar** | Atacar o alvo selecionado (só no turno de Odisseu) |
+| D ou clique em **Defender** | Reduzir o próximo golpe recebido (só no turno de Odisseu) |
+| Tab, setas ou clique no inimigo | Trocar o alvo selecionado |
+| Enter ou clique no botão | Continuar depois da vitória ou tentar de novo depois da derrota |
+
 Os controles serão implementados nos próximos commits e poderão ser ajustados durante o desenvolvimento.
 
 ## Tecnologias
