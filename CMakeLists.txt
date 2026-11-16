@@ -218,6 +218,19 @@ target_link_libraries(teste_configuracao_fases PRIVATE odisseu_regras raylib)
 add_test(NAME configuracao_fases COMMAND teste_configuracao_fases)
 
 add_executable(
+    teste_balanceamento
+    tests/teste_balanceamento.c
+    src/jogo/configuracao_fases.c
+)
+target_include_directories(
+    teste_balanceamento
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_link_libraries(teste_balanceamento PRIVATE odisseu_regras raylib)
+add_test(NAME balanceamento COMMAND teste_balanceamento)
+
+add_executable(
     teste_jornada
     tests/teste_jornada.c
 )

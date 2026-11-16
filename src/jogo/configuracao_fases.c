@@ -41,7 +41,7 @@ static const ConfiguracaoItemFase ITENS_CAVERNA[] = {
 
 static const ConfiguracaoInimigo INIMIGOS_POLIFEMO[] = {
     {
-        { "Polifemo", TIPO_INIMIGO, 120, 25, 8, 8 },
+        { "Polifemo", TIPO_INIMIGO, 84, 19, 6, 8 },
         { 0.0f, 0.0f, -2.0f },
         {
             "ciclope_primitivo",
@@ -74,7 +74,7 @@ static const ConfiguracaoItemFase ITENS_SEREIAS[] = {
 
 static const ConfiguracaoInimigo INIMIGOS_SEREIAS[] = {
     {
-        { "Sereia de Ligeia", TIPO_INIMIGO, 36, 11, 3, 14 },
+        { "Sereia de Ligeia", TIPO_INIMIGO, 36, 16, 4, 15 },
         { -3.0f, 0.0f, -4.0f },
         {
             "sereia_primitiva",
@@ -84,7 +84,7 @@ static const ConfiguracaoInimigo INIMIGOS_SEREIAS[] = {
         }
     },
     {
-        { "Sereia de Leucosia", TIPO_INIMIGO, 40, 12, 4, 11 },
+        { "Sereia de Leucosia", TIPO_INIMIGO, 42, 15, 5, 11 },
         { 3.0f, 0.0f, -4.0f },
         {
             "sereia_primitiva",
@@ -117,7 +117,7 @@ static const ConfiguracaoItemFase ITENS_CILA[] = {
 
 static const ConfiguracaoInimigo INIMIGOS_CILA[] = {
     {
-        { "Tentaculo de Cila I", TIPO_INIMIGO, 28, 10, 2, 13 },
+        { "Tentaculo de Cila I", TIPO_INIMIGO, 28, 14, 3, 14 },
         { -4.5f, 0.0f, -5.0f },
         {
             "tentaculo_primitivo",
@@ -127,7 +127,7 @@ static const ConfiguracaoInimigo INIMIGOS_CILA[] = {
         }
     },
     {
-        { "Tentaculo de Cila II", TIPO_INIMIGO, 32, 11, 3, 10 },
+        { "Tentaculo de Cila II", TIPO_INIMIGO, 34, 14, 4, 10 },
         { 0.0f, 0.0f, -6.0f },
         {
             "tentaculo_primitivo",
@@ -137,7 +137,7 @@ static const ConfiguracaoInimigo INIMIGOS_CILA[] = {
         }
     },
     {
-        { "Tentaculo de Cila III", TIPO_INIMIGO, 28, 10, 2, 7 },
+        { "Tentaculo de Cila III", TIPO_INIMIGO, 28, 13, 3, 7 },
         { 4.5f, 0.0f, -5.0f },
         {
             "tentaculo_primitivo",
@@ -170,7 +170,7 @@ static const ConfiguracaoItemFase ITENS_ITACA[] = {
 
 static const ConfiguracaoInimigo INIMIGOS_ITACA[] = {
     {
-        { "Antinoo", TIPO_INIMIGO, 42, 13, 5, 12 },
+        { "Antinoo", TIPO_INIMIGO, 45, 15, 5, 13 },
         { -3.0f, 0.0f, -6.0f },
         {
             "pretendente_primitivo",
@@ -180,7 +180,7 @@ static const ConfiguracaoInimigo INIMIGOS_ITACA[] = {
         }
     },
     {
-        { "Eurimaco", TIPO_INIMIGO, 46, 14, 5, 9 },
+        { "Eurimaco", TIPO_INIMIGO, 52, 16, 5, 14 },
         { 3.0f, 0.0f, -6.0f },
         {
             "pretendente_primitivo",
@@ -191,6 +191,14 @@ static const ConfiguracaoInimigo INIMIGOS_ITACA[] = {
     }
 };
 
+/* Balanceamento (commit 26), conferido por tests/teste_balanceamento.c:
+ * - Odisseu: 170 de vida, 20 de ataque, 10 de defesa e 12 de iniciativa em
+ *   todas as fases; a vida e carregada de uma fase para a seguinte.
+ * - Jogador que so ataca termina a jornada sem derrota, com pouca vida no
+ *   final; cada encontro dura cerca de 7 rodadas.
+ * - Dano sofrido cresce ate o confronto final, o mais perigoso.
+ * - A velocidade muda a ordem: Odisseu age primeiro contra Polifemo, no
+ *   meio contra Sereias e Cila e por ultimo contra os pretendentes. */
 static const ConfiguracaoFase FASES[] = {
     {
         .id = "caverna_polifemo",
@@ -221,7 +229,7 @@ static const ConfiguracaoFase FASES[] = {
             "peca de madeira",
             3
         },
-        .heroi = { "Odisseu", TIPO_HEROI, 100, 20, 10, 12 },
+        .heroi = { "Odisseu", TIPO_HEROI, 170, 20, 10, 12 },
         .encontro = {
             "Confronto com Polifemo",
             INIMIGOS_POLIFEMO,
@@ -266,7 +274,7 @@ static const ConfiguracaoFase FASES[] = {
             "ponto do conves",
             3
         },
-        .heroi = { "Odisseu", TIPO_HEROI, 100, 20, 10, 12 },
+        .heroi = { "Odisseu", TIPO_HEROI, 170, 20, 10, 12 },
         .encontro = {
             "Confronto com as Sereias",
             INIMIGOS_SEREIAS,
@@ -310,7 +318,7 @@ static const ConfiguracaoFase FASES[] = {
             "mecanismo",
             3
         },
-        .heroi = { "Odisseu", TIPO_HEROI, 100, 20, 10, 12 },
+        .heroi = { "Odisseu", TIPO_HEROI, 170, 20, 10, 12 },
         .encontro = {
             "Confronto com Cila",
             INIMIGOS_CILA,
@@ -355,7 +363,7 @@ static const ConfiguracaoFase FASES[] = {
             "arco",
             1
         },
-        .heroi = { "Odisseu", TIPO_HEROI, 100, 20, 10, 12 },
+        .heroi = { "Odisseu", TIPO_HEROI, 170, 20, 10, 12 },
         .encontro = {
             "Confronto final em Itaca",
             INIMIGOS_ITACA,

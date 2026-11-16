@@ -26,9 +26,9 @@ static void testarTabelaPrincipal(void)
         &configuracao->encontro.inimigos[0].personagem
     );
     assert(strcmp(heroi.nome, "Odisseu") == 0);
-    assert(heroi.vida == 100);
+    assert(heroi.vida == 170);
     assert(strcmp(inimigo.nome, "Polifemo") == 0);
-    assert(inimigo.vida == 120);
+    assert(inimigo.vida == 84);
 
     assert(criarFase(&fase, configuracao));
     assert(fase.configuracao == configuracao);
