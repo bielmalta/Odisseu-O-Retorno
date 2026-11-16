@@ -54,6 +54,7 @@ add_executable(
     src/render/fase_render.c
     src/render/hud_combate.c
     src/render/jogador.c
+    src/render/tela_narrativa.c
     src/render/telas_jogo.c
 )
 
@@ -99,6 +100,7 @@ add_library(
         src/jogo/painel_combate.c
         src/jogo/interpolacao.c
         src/jogo/animacao_combate.c
+        src/jogo/narrativa.c
         src/jogo/objetivo.c
 )
 
@@ -198,3 +200,7 @@ target_include_directories(
 )
 target_link_libraries(teste_jornada PRIVATE odisseu_core raylib)
 add_test(NAME jornada COMMAND teste_jornada)
+
+add_executable(teste_narrativa tests/teste_narrativa.c)
+target_link_libraries(teste_narrativa PRIVATE odisseu_core)
+add_test(NAME narrativa COMMAND teste_narrativa)

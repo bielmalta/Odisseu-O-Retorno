@@ -53,6 +53,7 @@ typedef struct ConfiguracaoFase {
     const char *id;
     const char *titulo;
     const char *instrucaoInicial;
+    const char *textoNarrativo;
 
     Vector3 pontoInicial;
     BoundingBox saida;

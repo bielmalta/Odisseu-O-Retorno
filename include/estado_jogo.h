@@ -8,6 +8,7 @@ typedef enum EstadoJogo {
     ESTADO_EXPLORACAO,
     ESTADO_COMBATE,
     ESTADO_PAUSA,
+    ESTADO_NARRATIVA,
     ESTADO_RETORNO_AO_LAR
 } EstadoJogo;
 

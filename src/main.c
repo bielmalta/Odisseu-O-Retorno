@@ -15,8 +15,10 @@
 #include "hud_combate.h"
 #include "ia_inimigo.h"
 #include "jornada.h"
+#include "narrativa.h"
 #include "painel_combate.h"
 #include "personagem.h"
+#include "tela_narrativa.h"
 #include "telas_jogo.h"
 
 enum {
@@ -28,6 +30,7 @@ enum {
 static Jogador jogador;
 static Fase fase;
 static Jornada jornada;
+static Narrativa narrativa;
 static EstadoJogo estadoAtual = ESTADO_MENU;
 static EstadoJogo estadoAntesDaPausa = ESTADO_EXPLORACAO;
 static bool sairSolicitado;
@@ -162,7 +165,16 @@ static void prepararNovaPartida(void)
 static void iniciarNovaPartida(void)
 {
     prepararNovaPartida();
-    definirEstado(ESTADO_EXPLORACAO);
+    if (fase.configuracao == NULL) {
+        definirEstado(ESTADO_MENU);
+        return;
+    }
+    narrativa = criarNarrativaIntroducao(
+        fase.titulo,
+        fase.configuracao->textoNarrativo,
+        fase.objetivo.descricao
+    );
+    definirEstado(ESTADO_NARRATIVA);
 }
 
 static void voltarAoMenu(void)
@@ -302,6 +314,13 @@ static void atualizarJogo(float deltaTempo)
         return;
     }
 
+    if (estadoAtual == ESTADO_NARRATIVA) {
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+            definirEstado(ESTADO_EXPLORACAO);
+        }
+        return;
+    }
+
     if (estadoAtual == ESTADO_PAUSA) {
         const bool pausouCombate = estadoAntesDaPausa == ESTADO_COMBATE;
         const AcaoTelaJogo acao = interpretarEntradaPausa(
@@ -370,6 +389,7 @@ static void atualizarJogo(float deltaTempo)
             avancarJornada(&jornada, &fase);
 
         if (resultado == JORNADA_PROXIMA_FASE) {
+            definirControleJogador(&jogador, false);
             inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
             iniciarEsperaTurnoInimigo(&esperaInimigo);
             iniciarAnimacaoCombate(&animacao);
@@ -378,9 +398,15 @@ static void atualizarJogo(float deltaTempo)
                 voltarAoMenu();
                 return;
             }
-            definirEstado(ESTADO_EXPLORACAO);
+            narrativa = criarNarrativaTransicao(
+                fase.titulo,
+                fase.configuracao->textoNarrativo,
+                fase.objetivo.descricao
+            );
+            definirEstado(ESTADO_NARRATIVA);
             TraceLog(LOG_INFO, "Jornada avancou para: %s", fase.titulo);
         } else if (resultado == JORNADA_RETORNO_AO_LAR) {
+            narrativa = criarNarrativaEncerramento();
             definirEstado(ESTADO_RETORNO_AO_LAR);
         }
     }
@@ -400,21 +426,12 @@ static void desenharJogo(void)
     PoseInimigo posesInimigos[FASE_MAX_INIMIGOS] = {0};
     Camera3D camera = jogador.camera;
 
-    if (estadoAtual == ESTADO_RETORNO_AO_LAR) {
-        ClearBackground((Color){ 24, 32, 52, 255 });
-        DrawText(
-            "Odisseu retornou ao lar",
-            GetScreenWidth() / 2 - 190,
-            GetScreenHeight() / 2 - 30,
-            32,
-            GOLD
-        );
-        DrawText(
-            "ENTER ou ESC para voltar ao menu",
-            GetScreenWidth() / 2 - 180,
-            GetScreenHeight() / 2 + 24,
-            20,
-            RAYWHITE
+    if (estadoAtual == ESTADO_NARRATIVA ||
+        estadoAtual == ESTADO_RETORNO_AO_LAR) {
+        desenharTelaNarrativa(
+            &narrativa,
+            GetScreenWidth(),
+            GetScreenHeight()
         );
         return;
     }

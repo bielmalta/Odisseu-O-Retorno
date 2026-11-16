@@ -196,6 +196,10 @@ static const ConfiguracaoFase FASES[] = {
         .id = "caverna_polifemo",
         .titulo = "Fase 1 - A Caverna de Polifemo",
         .instrucaoInicial = "Explore a caverna e cumpra o objetivo",
+        .textoNarrativo =
+            "Depois da Guerra de Troia, Odisseu enfrenta um longo caminho\n"
+            "de volta a Itaca. Uma tempestade o leva a uma ilha desconhecida,\n"
+            "onde a caverna do ciclope Polifemo bloqueia sua jornada.",
         .pontoInicial = { 0.0f, 0.0f, 14.0f },
         .saida = {
             { -1.8f, 0.0f, -23.0f },
@@ -237,6 +241,10 @@ static const ConfiguracaoFase FASES[] = {
         .id = "canto_sereias",
         .titulo = "Fase 2 - O Canto das Sereias",
         .instrucaoInicial = "Proteja os pontos do conves contra o canto",
+        .textoNarrativo =
+            "Livre da caverna, Odisseu retorna ao mar. O vento conduz o navio\n"
+            "ate as Sereias, cujo canto enfeitica todos que se aproximam.\n"
+            "O conves precisa ser protegido antes que seja tarde.",
         .pontoInicial = { 0.0f, 0.0f, 8.0f },
         .saida = {
             { -2.5f, 0.0f, -11.0f },
@@ -277,6 +285,10 @@ static const ConfiguracaoFase FASES[] = {
         .id = "estreito_cila",
         .titulo = "Fase 3 - O Estreito de Cila",
         .instrucaoInicial = "Reative os mecanismos antes do ataque",
+        .textoNarrativo =
+            "O canto ficou para tras, mas o navio entra em um estreito rochoso.\n"
+            "Nas sombras, Cila aguarda com seus tentaculos. Os mecanismos\n"
+            "do navio precisam funcionar para atravessar a passagem.",
         .pontoInicial = { 0.0f, 0.0f, 9.0f },
         .saida = {
             { -2.5f, 0.0f, -12.0f },
@@ -318,6 +330,10 @@ static const ConfiguracaoFase FASES[] = {
         .id = "retorno_itaca",
         .titulo = "Fase 4 - O Retorno a Itaca",
         .instrucaoInicial = "Recupere o arco no salao do palacio",
+        .textoNarrativo =
+            "Depois de anos no mar, Odisseu finalmente pisa em Itaca.\n"
+            "Seu palacio foi tomado por pretendentes. Para recuperar o lar,\n"
+            "ele precisa encontrar seu arco e atravessar o grande salao.",
         .pontoInicial = { 0.0f, 0.0f, 11.0f },
         .saida = {
             { -3.5f, 0.0f, -15.0f },

@@ -179,6 +179,14 @@ Cada fase possui cenário, cores, objetivo, interação, quantidade de inimigos,
 atributos e representação visual próprios. A mesma lista circular, o mesmo
 QuickSort e o mesmo controlador de combate são reutilizados em todas elas.
 
+### Sequências narrativas
+
+Antes da primeira fase, uma introdução apresenta a tentativa de Odisseu de
+retornar a Ítaca, os controles e o objetivo inicial. Ao avançar na jornada,
+uma transição curta contextualiza o próximo destino e mostra o novo objetivo.
+Depois da última fase, o epílogo apresenta o reencontro com Penélope e encerra
+a viagem antes de retornar ao menu principal.
+
 ### Animações, câmera e sons do combate
 
 O dano é sempre resolvido pela lógica (`acoes_combate`), no instante da ação. O módulo `animacao_combate`, em C puro, só conta o tempo do que a tela mostra: cada ataque ou defesa passa por começo, impacto e retorno, e o combate espera a animação terminar antes de passar o turno. A barra de vida cai no impacto, a mensagem aparece junto e a tela de vitória ou derrota só surge depois do golpe final e da queda.
