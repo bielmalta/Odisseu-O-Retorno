@@ -221,4 +221,4 @@ Projeto desenvolvido pela Turma A para a disciplina de Algoritmos e Estruturas d
 - Arthur de Almeida Oliveira
 - Márcio Rodriguez Perez
 - Guilherme Silva Guimarães
-- Hélio Moraes
+- Hélio de Moraes Rêgo Neto
