@@ -15,9 +15,19 @@ typedef struct Cenario {
     BoundingBox caixas[CENARIO_MAX_CAIXAS];
     Color cores[CENARIO_MAX_CAIXAS];
     int quantidade;
+    Color corChao;
+    Vector2 tamanhoChao;
+    int divisoesGrade;
 } Cenario;
 
 void limparCenario(Cenario *cenario);
+
+void configurarChaoCenario(
+    Cenario *cenario,
+    Vector2 tamanho,
+    Color cor,
+    int divisoesGrade
+);
 
 /* Retorna o indice da caixa criada ou -1 se nao houver espaco. */
 int adicionarCaixaCenario(

@@ -46,6 +46,7 @@ add_executable(
     odisseu_o_retorno
     src/main.c
     src/jogo/cenario.c
+    src/jogo/configuracao_fases.c
     src/jogo/fase.c
     src/render/audio_combate.c
     src/render/efeitos_combate.c
@@ -97,6 +98,7 @@ add_library(
         src/jogo/painel_combate.c
         src/jogo/interpolacao.c
         src/jogo/animacao_combate.c
+        src/jogo/objetivo.c
 )
 
 target_include_directories(
@@ -160,3 +162,22 @@ target_include_directories(
 )
 target_link_libraries(teste_telas_jogo PRIVATE raylib)
 add_test(NAME telas_jogo COMMAND teste_telas_jogo)
+
+add_executable(teste_objetivo tests/teste_objetivo.c)
+target_link_libraries(teste_objetivo PRIVATE odisseu_core)
+add_test(NAME objetivo COMMAND teste_objetivo)
+
+add_executable(
+    teste_configuracao_fases
+    tests/teste_configuracao_fases.c
+    src/jogo/cenario.c
+    src/jogo/configuracao_fases.c
+    src/jogo/fase.c
+)
+target_include_directories(
+    teste_configuracao_fases
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_link_libraries(teste_configuracao_fases PRIVATE odisseu_core raylib)
+add_test(NAME configuracao_fases COMMAND teste_configuracao_fases)

@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 #include "cenario.h"
+#include "configuracao_fases.h"
+#include "objetivo.h"
 #include "raylib.h"
 
 #define FASE_MAX_ITENS 8
@@ -25,15 +27,8 @@ typedef struct ItemFase {
     bool coletado;
 } ItemFase;
 
-typedef struct ObjetivoFase {
-    const char *descricao;
-    const char *nomeItem;
-    int progresso;
-    int necessario;
-    bool cumprido;
-} ObjetivoFase;
-
 typedef struct Fase {
+    const ConfiguracaoFase *configuracao;
     const char *titulo;
     Cenario cenario;
 
@@ -45,7 +40,7 @@ typedef struct Fase {
     int quantidadeItens;
     int itemAlvo; /* item no centro da mira, ou -1 */
 
-    ObjetivoFase objetivo;
+    Objetivo objetivo;
 
     /* Posicionamento do confronto: o jogador e colocado em
      * `pontoJogadorConfronto`, de frente para os inimigos. */
@@ -59,7 +54,10 @@ typedef struct Fase {
     float tempoMensagem;
 } Fase;
 
-/* Monta a fase base (Caverna de Polifemo, provisoria). */
+/* Monta uma fase a partir de uma entrada da tabela de configuracoes. */
+bool criarFase(Fase *fase, const ConfiguracaoFase *configuracao);
+
+/* Atalho temporario para a primeira entrada da tabela. */
 void criarFaseBase(Fase *fase);
 
 /* Atualiza qual item esta no centro da mira (raio lancado da camera). */

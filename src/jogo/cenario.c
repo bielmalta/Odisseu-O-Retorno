@@ -1,8 +1,29 @@
 #include "cenario.h"
 
+#include <stddef.h>
+
 void limparCenario(Cenario *cenario)
 {
     cenario->quantidade = 0;
+    cenario->corChao = (Color){ 90, 80, 60, 255 };
+    cenario->tamanhoChao = (Vector2){ 40.0f, 40.0f };
+    cenario->divisoesGrade = 40;
+}
+
+void configurarChaoCenario(
+    Cenario *cenario,
+    Vector2 tamanho,
+    Color cor,
+    int divisoesGrade
+)
+{
+    if (cenario == NULL) {
+        return;
+    }
+
+    cenario->tamanhoChao = tamanho;
+    cenario->corChao = cor;
+    cenario->divisoesGrade = divisoesGrade > 0 ? divisoesGrade : 1;
 }
 
 int adicionarCaixaCenario(
@@ -36,8 +57,13 @@ void removerCaixaCenario(Cenario *cenario, int indice)
 
 void desenharCenario(const Cenario *cenario)
 {
-    DrawPlane((Vector3){ 0, 0, 0 }, (Vector2){ 40, 40 }, (Color){ 90, 80, 60, 255 });
-    DrawGrid(40, 1.0f);
+    const float passoGrade = cenario->tamanhoChao.x /
+                             (float)cenario->divisoesGrade;
+
+    DrawPlane(
+        (Vector3){ 0, 0, 0 }, cenario->tamanhoChao, cenario->corChao
+    );
+    DrawGrid(cenario->divisoesGrade, passoGrade);
 
     for (int i = 0; i < cenario->quantidade; i++) {
         const BoundingBox b = cenario->caixas[i];

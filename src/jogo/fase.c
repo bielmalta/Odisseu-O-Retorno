@@ -3,132 +3,155 @@
 #include <stdio.h>
 #include <string.h>
 
-enum {
-    ITENS_NECESSARIOS = 3
-};
-
 static const float DISTANCIA_INTERACAO = 3.0f;
 static const float FOLGA_MIRA = 0.12f;
 static const float TEMPO_MENSAGEM = 3.5f;
 
-static const Vector3 TAMANHO_ITEM = { 0.9f, 0.3f, 0.3f };
-
 static void definirMensagem(Fase *fase, const char *texto)
 {
-    snprintf(fase->mensagem, sizeof fase->mensagem, "%s", texto);
+    if (fase == NULL) {
+        return;
+    }
+
+    snprintf(
+        fase->mensagem,
+        sizeof fase->mensagem,
+        "%s",
+        texto != NULL ? texto : ""
+    );
     fase->tempoMensagem = TEMPO_MENSAGEM;
 }
 
-static BoundingBox caixaDoItem(const ItemFase *item, float folga)
+static BoundingBox caixaDoItem(
+    const Fase *fase,
+    const ItemFase *item,
+    float folga
+)
 {
+    const Vector3 tamanho = fase->configuracao->tamanhoItem;
     const Vector3 meio = {
-        TAMANHO_ITEM.x / 2 + folga,
-        TAMANHO_ITEM.y / 2 + folga,
-        TAMANHO_ITEM.z / 2 + folga
+        tamanho.x / 2.0f + folga,
+        tamanho.y / 2.0f + folga,
+        tamanho.z / 2.0f + folga
     };
 
     return (BoundingBox){
-        { item->posicao.x - meio.x, item->posicao.y - meio.y, item->posicao.z - meio.z },
-        { item->posicao.x + meio.x, item->posicao.y + meio.y, item->posicao.z + meio.z }
+        {
+            item->posicao.x - meio.x,
+            item->posicao.y - meio.y,
+            item->posicao.z - meio.z
+        },
+        {
+            item->posicao.x + meio.x,
+            item->posicao.y + meio.y,
+            item->posicao.z + meio.z
+        }
     };
 }
 
-static void adicionarItem(Fase *fase, Vector3 posicao)
+static bool configuracaoValida(const ConfiguracaoFase *configuracao)
 {
-    if (fase->quantidadeItens >= FASE_MAX_ITENS) {
-        return;
+    if (configuracao == NULL || configuracao->titulo == NULL ||
+        configuracao->quantidadeCaixas < 0 ||
+        configuracao->quantidadeCaixas > CENARIO_MAX_CAIXAS ||
+        (configuracao->quantidadeCaixas > 0 && configuracao->caixas == NULL) ||
+        configuracao->quantidadeItens < 0 ||
+        configuracao->quantidadeItens > FASE_MAX_ITENS ||
+        (configuracao->quantidadeItens > 0 && configuracao->itens == NULL) ||
+        configuracao->encontro.inimigos == NULL ||
+        configuracao->encontro.quantidadeInimigos <= 0 ||
+        configuracao->encontro.quantidadeInimigos > FASE_MAX_INIMIGOS) {
+        return false;
     }
-    fase->itens[fase->quantidadeItens++] = (ItemFase){ posicao, false };
+
+    return true;
 }
 
-static void montarCenario(Fase *fase)
+bool criarFase(Fase *fase, const ConfiguracaoFase *configuracao)
 {
-    Cenario *c = &fase->cenario;
-    const Color pedra = { 150, 135, 110, 255 };
-    const Color pedraEscura = { 120, 108, 90, 255 };
-    const Color portao = { 140, 50, 40, 255 };
+    if (fase == NULL || !configuracaoValida(configuracao)) {
+        return false;
+    }
 
-    limparCenario(c);
+    memset(fase, 0, sizeof *fase);
+    fase->configuracao = configuracao;
+    fase->titulo = configuracao->titulo;
+    fase->pontoInicial = configuracao->pontoInicial;
+    fase->saida = configuracao->saida;
+    fase->indicePortao = -1;
+    fase->itemAlvo = -1;
 
-    /* Limites da arena (40x40). A parede norte tem uma abertura de 4 m
-     * em x = 0, fechada pelo portao ate o confronto terminar. */
-    adicionarCaixaCenario(c, (Vector3){ 0, 2, 20.5f }, (Vector3){ 42, 4, 1 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ -20.5f, 2, 0 }, (Vector3){ 1, 4, 42 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ 20.5f, 2, 0 }, (Vector3){ 1, 4, 42 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ -11.5f, 2, -20.5f }, (Vector3){ 19, 4, 1 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ 11.5f, 2, -20.5f }, (Vector3){ 19, 4, 1 }, pedra);
-
-    /* Alcova da saida, atras do portao */
-    adicionarCaixaCenario(c, (Vector3){ 0, 2, -23.5f }, (Vector3){ 5, 4, 1 }, pedraEscura);
-    adicionarCaixaCenario(c, (Vector3){ -2.5f, 2, -22 }, (Vector3){ 1, 4, 4 }, pedraEscura);
-    adicionarCaixaCenario(c, (Vector3){ 2.5f, 2, -22 }, (Vector3){ 1, 4, 4 }, pedraEscura);
-
-    fase->indicePortao = adicionarCaixaCenario(
-        c, (Vector3){ 0, 2, -20.5f }, (Vector3){ 4, 4, 1 }, portao
+    limparCenario(&fase->cenario);
+    configurarChaoCenario(
+        &fase->cenario,
+        configuracao->tamanhoChao,
+        configuracao->corChao,
+        configuracao->divisoesGrade
     );
 
-    /* Obstaculos */
-    adicionarCaixaCenario(c, (Vector3){ 0, 2, -8 }, (Vector3){ 6, 4, 1 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ -8, 2, 4 }, (Vector3){ 2, 4, 2 }, pedraEscura);
-    adicionarCaixaCenario(c, (Vector3){ 8, 2, 4 }, (Vector3){ 2, 4, 2 }, pedraEscura);
-    adicionarCaixaCenario(c, (Vector3){ 6, 0.4f, -2 }, (Vector3){ 2, 0.8f, 2 }, pedra);
-    adicionarCaixaCenario(c, (Vector3){ 8.5f, 0.8f, -2 }, (Vector3){ 3, 1.6f, 2 }, pedra);
+    for (int i = 0; i < configuracao->quantidadeCaixas; i++) {
+        const ConfiguracaoCaixaCenario *caixa = &configuracao->caixas[i];
+        const int indice = adicionarCaixaCenario(
+            &fase->cenario, caixa->centro, caixa->tamanho, caixa->cor
+        );
+
+        if (caixa->portao) {
+            fase->indicePortao = indice;
+        }
+    }
+
+    for (int i = 0; i < configuracao->quantidadeItens; i++) {
+        fase->itens[i] = (ItemFase){ configuracao->itens[i].posicao, false };
+    }
+    fase->quantidadeItens = configuracao->quantidadeItens;
+
+    fase->objetivo = criarObjetivo(&configuracao->objetivo);
+    iniciarObjetivo(&fase->objetivo);
+
+    fase->pontoJogadorConfronto = configuracao->encontro.pontoJogador;
+    fase->quantidadeInimigos = configuracao->encontro.quantidadeInimigos;
+    for (int i = 0; i < fase->quantidadeInimigos; i++) {
+        fase->pontosInimigos[i] = configuracao->encontro.inimigos[i].posicao;
+    }
+
+    fase->etapa = ETAPA_EXPLORACAO;
+    definirMensagem(fase, configuracao->instrucaoInicial);
+    return true;
 }
 
 void criarFaseBase(Fase *fase)
 {
-    memset(fase, 0, sizeof *fase);
+    const ConfiguracaoFase *configuracao = obterConfiguracaoFase(0);
 
-    fase->titulo = "Fase 1 - A Caverna de Polifemo";
-    montarCenario(fase);
-
-    fase->pontoInicial = (Vector3){ 0.0f, 0.0f, 14.0f };
-
-    /* Area de saida dentro da alcova, atras do portao */
-    fase->saida = (BoundingBox){
-        { -1.8f, 0.0f, -23.0f }, { 1.8f, 3.0f, -21.2f }
-    };
-
-    /* Pecas de madeira: uma no alto da plataforma (exige pulo), uma atras
-     * de um pilar e uma no canto distante. */
-    adicionarItem(fase, (Vector3){ 8.5f, 1.75f, -2.0f });
-    adicionarItem(fase, (Vector3){ -9.8f, 0.15f, 2.5f });
-    adicionarItem(fase, (Vector3){ -15.0f, 0.15f, -15.0f });
-    fase->itemAlvo = -1;
-
-    fase->objetivo = (ObjetivoFase){
-        "Encontre pecas de madeira para preparar a estaca",
-        "peca de madeira",
-        0,
-        ITENS_NECESSARIOS,
-        false
-    };
-
-    /* Palco do confronto: area livre no centro da arena */
-    fase->pontoJogadorConfronto = (Vector3){ 0.0f, 0.0f, 6.0f };
-    fase->pontosInimigos[0] = (Vector3){ 0.0f, 0.0f, -2.0f };
-    fase->quantidadeInimigos = 1;
-
-    fase->etapa = ETAPA_EXPLORACAO;
-    definirMensagem(fase, "Explore a caverna e cumpra o objetivo");
+    if (!criarFase(fase, configuracao) && fase != NULL) {
+        memset(fase, 0, sizeof *fase);
+        fase->itemAlvo = -1;
+        fase->indicePortao = -1;
+    }
 }
 
 void atualizarMiraFase(Fase *fase, Ray raio)
 {
+    float melhorDistancia = DISTANCIA_INTERACAO;
+    int melhorItem = -1;
+
+    if (fase == NULL) {
+        return;
+    }
+
     fase->itemAlvo = -1;
     if (fase->etapa != ETAPA_EXPLORACAO) {
         return;
     }
 
-    float melhorDistancia = DISTANCIA_INTERACAO;
-    int melhorItem = -1;
-
     for (int i = 0; i < fase->quantidadeItens; i++) {
         if (fase->itens[i].coletado) {
             continue;
         }
-        const RayCollision colisao =
-            GetRayCollisionBox(raio, caixaDoItem(&fase->itens[i], FOLGA_MIRA));
+
+        const RayCollision colisao = GetRayCollisionBox(
+            raio, caixaDoItem(fase, &fase->itens[i], FOLGA_MIRA)
+        );
         if (colisao.hit && colisao.distance <= melhorDistancia) {
             melhorDistancia = colisao.distance;
             melhorItem = i;
@@ -141,7 +164,9 @@ void atualizarMiraFase(Fase *fase, Ray raio)
 
     /* Uma parede entre a camera e o item bloqueia a interacao. */
     for (int i = 0; i < fase->cenario.quantidade; i++) {
-        const RayCollision parede = GetRayCollisionBox(raio, fase->cenario.caixas[i]);
+        const RayCollision parede = GetRayCollisionBox(
+            raio, fase->cenario.caixas[i]
+        );
         if (parede.hit && parede.distance < melhorDistancia - 0.02f) {
             return;
         }
@@ -152,33 +177,38 @@ void atualizarMiraFase(Fase *fase, Ray raio)
 
 static void abrirPortao(Fase *fase)
 {
-    removerCaixaCenario(&fase->cenario, fase->indicePortao);
+    if (fase->indicePortao >= 0) {
+        removerCaixaCenario(&fase->cenario, fase->indicePortao);
+    }
 }
 
-/* Soma uma coleta ao objetivo e, ao completa-lo, inicia o confronto. */
 static void registrarColeta(Fase *fase)
 {
-    ObjetivoFase *objetivo = &fase->objetivo;
+    Objetivo *objetivo = &fase->objetivo;
 
-    objetivo->progresso++;
-    if (objetivo->progresso < objetivo->necessario) {
+    registrarProgresso(objetivo, 1);
+    if (!verificarObjetivo(objetivo)) {
         char texto[FASE_TAMANHO_MENSAGEM];
         snprintf(
-            texto, sizeof texto, "Coletou %s (%d/%d)",
-            objetivo->nomeItem, objetivo->progresso, objetivo->necessario
+            texto,
+            sizeof texto,
+            "Coletou %s (%d/%d)",
+            objetivo->nomeAlvo,
+            objetivo->progresso,
+            objetivo->necessario
         );
         definirMensagem(fase, texto);
         return;
     }
 
-    objetivo->cumprido = true;
     fase->etapa = ETAPA_CONFRONTO;
-    definirMensagem(fase, "Estaca pronta! Polifemo surge diante de voce");
+    definirMensagem(fase, fase->configuracao->mensagemObjetivoConcluido);
 }
 
 bool interagir(Fase *fase)
 {
-    if (fase->etapa != ETAPA_EXPLORACAO || fase->itemAlvo < 0) {
+    if (fase == NULL || fase->etapa != ETAPA_EXPLORACAO ||
+        fase->objetivo.tipo != OBJETIVO_COLETA || fase->itemAlvo < 0) {
         return false;
     }
 
@@ -190,17 +220,24 @@ bool interagir(Fase *fase)
 
 void encerrarConfronto(Fase *fase)
 {
-    if (fase->etapa != ETAPA_CONFRONTO) {
+    if (fase == NULL || fase->etapa != ETAPA_CONFRONTO) {
         return;
     }
 
     fase->etapa = ETAPA_SAIDA_LIBERADA;
     abrirPortao(fase);
-    definirMensagem(fase, "Polifemo foi vencido. A passagem da caverna se abriu!");
+    definirMensagem(
+        fase,
+        fase->configuracao->encontro.recompensaNarrativa
+    );
 }
 
 void atualizarFase(Fase *fase, Vector3 posicaoJogador, float deltaTempo)
 {
+    if (fase == NULL) {
+        return;
+    }
+
     if (fase->tempoMensagem > 0.0f) {
         fase->tempoMensagem -= deltaTempo;
     }
@@ -209,11 +246,14 @@ void atualizarFase(Fase *fase, Vector3 posicaoJogador, float deltaTempo)
         return;
     }
 
-    const BoundingBox s = fase->saida;
-    if (posicaoJogador.x >= s.min.x && posicaoJogador.x <= s.max.x &&
-        posicaoJogador.z >= s.min.z && posicaoJogador.z <= s.max.z &&
-        posicaoJogador.y >= s.min.y && posicaoJogador.y <= s.max.y) {
+    const BoundingBox saida = fase->saida;
+    if (posicaoJogador.x >= saida.min.x &&
+        posicaoJogador.x <= saida.max.x &&
+        posicaoJogador.z >= saida.min.z &&
+        posicaoJogador.z <= saida.max.z &&
+        posicaoJogador.y >= saida.min.y &&
+        posicaoJogador.y <= saida.max.y) {
         fase->etapa = ETAPA_CONCLUIDA;
-        definirMensagem(fase, "Fase concluida! A jornada continua...");
+        definirMensagem(fase, fase->configuracao->mensagemFaseConcluida);
     }
 }

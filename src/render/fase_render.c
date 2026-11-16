@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interpolacao.h"
 #include "rlgl.h"
@@ -15,7 +16,8 @@ static void desenharTexto(const char *texto, int x, int y, int tamanho, Color co
 
 static void desenharItens(const Fase *fase)
 {
-    const Vector3 tamanho = { 0.9f, 0.3f, 0.3f };
+    const ConfiguracaoFase *configuracao = fase->configuracao;
+    const Vector3 tamanho = configuracao->tamanhoItem;
 
     for (int i = 0; i < fase->quantidadeItens; i++) {
         if (fase->itens[i].coletado) {
@@ -24,8 +26,12 @@ static void desenharItens(const Fase *fase)
         const Vector3 p = fase->itens[i].posicao;
         const bool mirado = (i == fase->itemAlvo);
 
-        DrawCubeV(p, tamanho, (Color){ 130, 85, 40, 255 });
-        DrawCubeWiresV(p, tamanho, mirado ? YELLOW : (Color){ 60, 35, 15, 255 });
+        DrawCubeV(p, tamanho, configuracao->corItem);
+        DrawCubeWiresV(
+            p,
+            tamanho,
+            mirado ? YELLOW : configuracao->corContornoItem
+        );
     }
 }
 
@@ -75,30 +81,46 @@ Vector3 posicaoInimigoComPose(const Fase *fase, int indice, const PoseInimigo *p
     };
 }
 
-/* Representacao provisoria de Polifemo (primitivas), no ponto do inimigo,
- * deslocada e inclinada pela pose: investe contra Odisseu, recua ao ser
- * atingido, abaixa na defesa e tomba ao ser derrotado. */
+/* Representacao provisoria configurada para o inimigo, deslocada e inclinada
+ * pela pose: investe, recua, abaixa na defesa e tomba ao ser derrotado. */
 static void desenharInimigo(const Fase *fase, int indice, const PoseInimigo *pose)
 {
+    const ConfiguracaoVisualInimigo *visual =
+        &fase->configuracao->encontro.inimigos[indice].visual;
     const Vector3 posicao = posicaoInimigoComPose(fase, indice, pose);
     const Vector3 dir = direcaoParaJogador(fase, fase->pontosInimigos[indice]);
     /* Inclina para o jogador ao investir, para tras ao se preparar, e tomba. */
     const float inclinacao = pose->avanco * 12.0f - pose->preparo * 10.0f -
                              pose->queda * 90.0f;
     const float altura = 1.0f - 0.18f * pose->agachar;
-    const Color corpo = clarear((Color){ 120, 80, 70, 255 }, pose->brilho);
-    const Color cabecaCor = clarear((Color){ 150, 105, 90, 255 }, pose->brilho);
+    const float escala = visual->escala > 0.0f ? visual->escala : 1.0f;
+    const Color corpo = clarear(visual->corCorpo, pose->brilho);
+    const Color cabecaCor = clarear(visual->corCabeca, pose->brilho);
 
     rlPushMatrix();
     rlTranslatef(posicao.x, posicao.y, posicao.z);
     /* Eixo do tombo: horizontal, perpendicular a direcao do jogador. */
     rlRotatef(inclinacao, dir.z, 0.0f, -dir.x);
-    rlScalef(1.0f, altura, 1.0f);
+    rlScalef(escala, altura * escala, escala);
 
-    DrawCylinder((Vector3){ 0.0f, 0.0f, 0.0f }, 1.0f, 1.5f, 3.6f, 16, corpo);
-    DrawSphere((Vector3){ 0.0f, 4.2f, 0.0f }, 0.95f, cabecaCor);
-    DrawSphere((Vector3){ 0.0f, 4.3f, 0.75f }, 0.28f, WHITE);
-    DrawSphere((Vector3){ 0.0f, 4.3f, 0.93f }, 0.12f, BLACK);
+    if (visual->modelo != NULL &&
+        strcmp(visual->modelo, "ciclope_primitivo") == 0) {
+        DrawCylinder(
+            (Vector3){ 0.0f, 0.0f, 0.0f },
+            1.0f, 1.5f, 3.6f, 16, corpo
+        );
+        DrawSphere((Vector3){ 0.0f, 4.2f, 0.0f }, 0.95f, cabecaCor);
+        DrawSphere((Vector3){ 0.0f, 4.3f, 0.75f }, 0.28f, WHITE);
+        DrawSphere((Vector3){ 0.0f, 4.3f, 0.93f }, 0.12f, BLACK);
+    } else {
+        /* Modelo generico usado por uma configuracao ainda sem asset proprio. */
+        DrawCubeV(
+            (Vector3){ 0.0f, 1.8f, 0.0f },
+            (Vector3){ 1.8f, 3.6f, 1.2f },
+            corpo
+        );
+        DrawSphere((Vector3){ 0.0f, 4.1f, 0.0f }, 0.75f, cabecaCor);
+    }
 
     rlPopMatrix();
 }
@@ -147,9 +169,9 @@ static const char *textoObjetivoAtual(const Fase *fase, char *buffer, int tamanh
         );
         return buffer;
     case ETAPA_CONFRONTO:
-        return "Objetivo: derrote Polifemo";
+        return fase->configuracao->textoObjetivoConfronto;
     case ETAPA_SAIDA_LIBERADA:
-        return "Objetivo: ache a saida da caverna, ao norte";
+        return fase->configuracao->textoObjetivoSaida;
     default:
         return "Fase concluida!";
     }
@@ -177,7 +199,9 @@ void desenharHudFase(const Fase *fase)
 
     /* Aviso de interacao: so com objeto valido no centro da mira */
     if (fase->itemAlvo >= 0) {
-        const char *aviso = TextFormat("[E] Coletar %s", fase->objetivo.nomeItem);
+        const char *aviso = TextFormat(
+            "[E] Coletar %s", fase->objetivo.nomeAlvo
+        );
         const int larguraAviso = MeasureText(aviso, 22);
         desenharTexto(aviso, centroX - larguraAviso / 2, centroY + 30, 22, YELLOW);
     }

@@ -39,9 +39,8 @@ static AnimacaoCombate animacao; /* tempo das acoes vistas na tela */
 static EfeitosSonoros sons;
 
 static Personagem odisseu;
-static Personagem polifemo;
-
-static Personagem *inimigosCombate[1];
+static Personagem inimigosFase[FASE_MAX_INIMIGOS];
+static Personagem *inimigosCombate[FASE_MAX_INIMIGOS];
 
 /* Unico ponto que liga o estado do jogo ao controle do jogador:
  * so a exploracao libera movimento e giro da camera. */
@@ -63,12 +62,17 @@ static void iniciarConfronto(void)
     Vector3 alvo = fase.pontosInimigos[0];
     alvo.y += 2.5f;
 
+    if (fase.configuracao == NULL || fase.quantidadeInimigos <= 0) {
+        TraceLog(LOG_ERROR, "Fase sem encontro configurado.");
+        return;
+    }
+
     /* Prepara a lista circular com os participantes. */
     if (!prepararCombate(
             &combate,
             &odisseu,
             inimigosCombate,
-            1)) {
+            fase.quantidadeInimigos)) {
         TraceLog(LOG_ERROR, "Falha ao preparar combate.");
         return;
     }
@@ -88,21 +92,32 @@ static void iniciarConfronto(void)
 
     definirEstado(ESTADO_COMBATE);
 
-    TraceLog(LOG_INFO, "Combate contra Polifemo iniciado.");
+    TraceLog(
+        LOG_INFO,
+        "%s iniciado.",
+        fase.configuracao->encontro.nome
+    );
 }
 
-/* Cria os participantes do primeiro encontro, com a vida cheia. */
-static void criarParticipantes(void)
+/* Cria os participantes definidos pela configuracao, com a vida cheia. */
+static bool criarParticipantes(void)
 {
-    odisseu = criarPersonagem(
-        "Odisseu", TIPO_HEROI, 100, 20, 10, 12
-    );
+    const ConfiguracaoFase *configuracao = fase.configuracao;
 
-    polifemo = criarPersonagem(
-        "Polifemo", TIPO_INIMIGO, 120, 25, 8, 8
-    );
+    if (configuracao == NULL ||
+        configuracao->encontro.quantidadeInimigos <= 0 ||
+        configuracao->encontro.quantidadeInimigos > FASE_MAX_INIMIGOS) {
+        return false;
+    }
 
-    inimigosCombate[0] = &polifemo;
+    odisseu = criarPersonagemConfigurada(&configuracao->heroi);
+    for (int i = 0; i < configuracao->encontro.quantidadeInimigos; i++) {
+        inimigosFase[i] = criarPersonagemConfigurada(
+            &configuracao->encontro.inimigos[i].personagem
+        );
+        inimigosCombate[i] = &inimigosFase[i];
+    }
+    return true;
 }
 
 /* Vitoria confirmada: libera a saida e volta a explorar. */
@@ -117,8 +132,9 @@ static void concluirConfronto(void)
 static void reiniciarConfronto(void)
 {
     finalizarCombate(&combate);
-    criarParticipantes();
-    iniciarConfronto();
+    if (criarParticipantes()) {
+        iniciarConfronto();
+    }
 }
 
 /* Reconstroi toda a fase e garante que nenhuma lista ou animacao da partida
@@ -131,7 +147,9 @@ static void prepararNovaPartida(void)
     inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
     iniciarEsperaTurnoInimigo(&esperaInimigo);
     iniciarAnimacaoCombate(&animacao);
-    criarParticipantes();
+    if (!criarParticipantes()) {
+        TraceLog(LOG_ERROR, "Falha ao criar participantes configurados.");
+    }
     estadoAntesDaPausa = ESTADO_EXPLORACAO;
 }
 

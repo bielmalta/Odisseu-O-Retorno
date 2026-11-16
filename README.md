@@ -150,6 +150,20 @@ tests/
 - `assets`: modelos, texturas, fontes e arquivos de áudio.
 - `tests`: testes das estruturas de dados e regras do jogo.
 
+### Configuração de fases e encontros
+
+O conteúdo da fase atual fica em uma tabela constante de C no módulo
+`configuracao_fases`. Cada entrada reúne título, instrução, geometria do
+cenário, itens, objetivo, saída, atributos do herói e inimigos, posições do
+encontro, aparência provisória e textos de resultado.
+
+O módulo `objetivo` controla o progresso por meio de `criarObjetivo()`,
+`iniciarObjetivo()`, `registrarProgresso()`, `verificarObjetivo()` e
+`concluirObjetivo()`. As regras da fase consomem essas configurações sem
+conhecer nomes ou atributos específicos de Polifemo. Assim, novos conteúdos
+podem ser descritos por outra entrada da tabela sem alterar o controlador de
+combate.
+
 ### Animações, câmera e sons do combate
 
 O dano é sempre resolvido pela lógica (`acoes_combate`), no instante da ação. O módulo `animacao_combate`, em C puro, só conta o tempo do que a tela mostra: cada ataque ou defesa passa por começo, impacto e retorno, e o combate espera a animação terminar antes de passar o turno. A barra de vida cai no impacto, a mensagem aparece junto e a tela de vitória ou derrota só surge depois do golpe final e da queda.
