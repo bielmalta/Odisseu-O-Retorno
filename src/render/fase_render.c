@@ -20,13 +20,18 @@ static void desenharItens(const Fase *fase)
     const Vector3 tamanho = configuracao->tamanhoItem;
 
     for (int i = 0; i < fase->quantidadeItens; i++) {
-        if (fase->itens[i].coletado) {
+        const bool concluido = fase->itens[i].concluido;
+        const bool remover = configuracao->itens[i].removerAoInteragir;
+
+        if (concluido && remover) {
             continue;
         }
         const Vector3 p = fase->itens[i].posicao;
         const bool mirado = (i == fase->itemAlvo);
+        const Color cor = concluido ? (Color){ 70, 150, 90, 255 }
+                                    : configuracao->corItem;
 
-        DrawCubeV(p, tamanho, configuracao->corItem);
+        DrawCubeV(p, tamanho, cor);
         DrawCubeWiresV(
             p,
             tamanho,
@@ -112,6 +117,46 @@ static void desenharInimigo(const Fase *fase, int indice, const PoseInimigo *pos
         DrawSphere((Vector3){ 0.0f, 4.2f, 0.0f }, 0.95f, cabecaCor);
         DrawSphere((Vector3){ 0.0f, 4.3f, 0.75f }, 0.28f, WHITE);
         DrawSphere((Vector3){ 0.0f, 4.3f, 0.93f }, 0.12f, BLACK);
+    } else if (visual->modelo != NULL &&
+               strcmp(visual->modelo, "sereia_primitiva") == 0) {
+        DrawCylinder(
+            (Vector3){ 0.0f, 0.0f, 0.0f },
+            0.8f, 0.55f, 3.0f, 12, corpo
+        );
+        DrawSphere((Vector3){ 0.0f, 3.55f, 0.0f }, 0.65f, cabecaCor);
+        DrawCubeV(
+            (Vector3){ -1.15f, 2.1f, 0.0f },
+            (Vector3){ 1.3f, 1.8f, 0.18f },
+            clarear(corpo, 0.15f)
+        );
+        DrawCubeV(
+            (Vector3){ 1.15f, 2.1f, 0.0f },
+            (Vector3){ 1.3f, 1.8f, 0.18f },
+            clarear(corpo, 0.15f)
+        );
+    } else if (visual->modelo != NULL &&
+               strcmp(visual->modelo, "tentaculo_primitivo") == 0) {
+        DrawCylinder(
+            (Vector3){ 0.0f, 0.0f, 0.0f },
+            0.8f, 0.35f, 4.2f, 14, corpo
+        );
+        DrawSphere((Vector3){ 0.0f, 4.2f, 0.0f }, 0.38f, cabecaCor);
+        DrawSphere((Vector3){ 0.0f, 1.0f, 0.65f }, 0.16f, cabecaCor);
+        DrawSphere((Vector3){ 0.0f, 2.0f, 0.48f }, 0.14f, cabecaCor);
+        DrawSphere((Vector3){ 0.0f, 3.0f, 0.30f }, 0.12f, cabecaCor);
+    } else if (visual->modelo != NULL &&
+               strcmp(visual->modelo, "pretendente_primitivo") == 0) {
+        DrawCubeV(
+            (Vector3){ 0.0f, 1.7f, 0.0f },
+            (Vector3){ 1.6f, 3.4f, 1.0f },
+            corpo
+        );
+        DrawSphere((Vector3){ 0.0f, 3.9f, 0.0f }, 0.7f, cabecaCor);
+        DrawCubeV(
+            (Vector3){ 1.0f, 1.5f, 0.35f },
+            (Vector3){ 0.16f, 3.0f, 0.16f },
+            LIGHTGRAY
+        );
     } else {
         /* Modelo generico usado por uma configuracao ainda sem asset proprio. */
         DrawCubeV(
@@ -199,8 +244,11 @@ void desenharHudFase(const Fase *fase)
 
     /* Aviso de interacao: so com objeto valido no centro da mira */
     if (fase->itemAlvo >= 0) {
+        const char *verbo = fase->objetivo.tipo == OBJETIVO_COLETA
+                                ? "Coletar"
+                                : "Ativar";
         const char *aviso = TextFormat(
-            "[E] Coletar %s", fase->objetivo.nomeAlvo
+            "[E] %s %s", verbo, fase->objetivo.nomeAlvo
         );
         const int larguraAviso = MeasureText(aviso, 22);
         desenharTexto(aviso, centroX - larguraAviso / 2, centroY + 30, 22, YELLOW);

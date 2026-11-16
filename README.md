@@ -164,6 +164,21 @@ conhecer nomes ou atributos específicos de Polifemo. Assim, novos conteúdos
 podem ser descritos por outra entrada da tabela sem alterar o controlador de
 combate.
 
+### Fases mitológicas
+
+1. **A Caverna de Polifemo:** coletar três peças de madeira, preparar a estaca,
+   derrotar Polifemo e encontrar a saída da caverna.
+2. **O Canto das Sereias:** proteger três pontos do convés, enfrentar duas
+   Sereias e alcançar o leme.
+3. **O Estreito de Cila:** reativar três mecanismos do navio, derrotar os três
+   tentáculos de Cila e alcançar a proa.
+4. **O Retorno a Ítaca:** recuperar o arco de Odisseu, derrotar os pretendentes
+   e atravessar o palácio até Penélope.
+
+Cada fase possui cenário, cores, objetivo, interação, quantidade de inimigos,
+atributos e representação visual próprios. A mesma lista circular, o mesmo
+QuickSort e o mesmo controlador de combate são reutilizados em todas elas.
+
 ### Animações, câmera e sons do combate
 
 O dano é sempre resolvido pela lógica (`acoes_combate`), no instante da ação. O módulo `animacao_combate`, em C puro, só conta o tempo do que a tela mostra: cada ataque ou defesa passa por começo, impacto e retorno, e o combate espera a animação terminar antes de passar o turno. A barra de vida cai no impacto, a mensagem aparece junto e a tela de vitória ou derrota só surge depois do golpe final e da queda.

@@ -38,13 +38,31 @@ static void testarConclusaoDaUltimaEtapa(void)
     jornada.odisseu.ataque += 4;
     ataquePersistente = jornada.odisseu.ataque;
 
-    concluirObjetivo(&fase.objetivo);
-    registrarVitoriaJornada(&jornada);
-    fase.etapa = ETAPA_CONCLUIDA;
+    for (int indice = 0; indice < quantidadeConfiguracoesFase(); indice++) {
+        const bool ultima = indice == quantidadeConfiguracoesFase() - 1;
 
-    assert(avancarJornada(&jornada, &fase) == JORNADA_RETORNO_AO_LAR);
+        assert(jornada.indiceEtapaAtual == indice);
+        assert(fase.configuracao == obterConfiguracaoFase(indice));
+
+        concluirObjetivo(&fase.objetivo);
+        registrarVitoriaJornada(&jornada);
+        fase.etapa = ETAPA_CONCLUIDA;
+
+        assert(avancarJornada(&jornada, &fase) ==
+               (ultima ? JORNADA_RETORNO_AO_LAR
+                       : JORNADA_PROXIMA_FASE));
+
+        assert(jornada.odisseu.vida == 37);
+        assert(jornada.odisseu.ataque == ataquePersistente);
+        if (!ultima) {
+            assert(!jornada.combateVencido);
+            assert(fase.etapa == ETAPA_EXPLORACAO);
+            assert(!verificarObjetivo(&fase.objetivo));
+        }
+    }
+
     assert(jornada.concluida);
-    assert(jornada.indiceEtapaAtual == 0);
+    assert(jornada.indiceEtapaAtual == quantidadeConfiguracoesFase() - 1);
     assert(jornada.odisseu.vida == 37);
     assert(jornada.odisseu.ataque == ataquePersistente);
     assert(avancarJornada(&jornada, &fase) == JORNADA_AVANCO_BLOQUEADO);

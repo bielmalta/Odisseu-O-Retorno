@@ -25,6 +25,7 @@ typedef struct ConfiguracaoCaixaCenario {
 
 typedef struct ConfiguracaoItemFase {
     Vector3 posicao;
+    bool removerAoInteragir;
 } ConfiguracaoItemFase;
 
 typedef struct ConfiguracaoVisualInimigo {

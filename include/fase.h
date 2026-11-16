@@ -24,7 +24,7 @@ typedef enum EtapaFase {
 
 typedef struct ItemFase {
     Vector3 posicao; /* centro do item */
-    bool coletado;
+    bool concluido; /* ja foi coletado ou ativado */
 } ItemFase;
 
 typedef struct Fase {

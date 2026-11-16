@@ -12,10 +12,10 @@ static void testarTabelaPrincipal(void)
     Personagem inimigo;
     Fase fase;
 
-    assert(quantidadeConfiguracoesFase() == 1);
+    assert(quantidadeConfiguracoesFase() == 4);
     assert(configuracao != NULL);
     assert(obterConfiguracaoFase(-1) == NULL);
-    assert(obterConfiguracaoFase(1) == NULL);
+    assert(obterConfiguracaoFase(4) == NULL);
     assert(strcmp(configuracao->id, "caverna_polifemo") == 0);
     assert(configuracao->quantidadeCaixas == 14);
     assert(configuracao->quantidadeItens == 3);
@@ -39,6 +39,44 @@ static void testarTabelaPrincipal(void)
     assert(fase.objetivo.necessario == 3);
     assert(fase.objetivo.iniciado);
     assert(fase.indicePortao >= 0);
+}
+
+static void testarFasesMitologicas(void)
+{
+    const char *ids[] = {
+        "caverna_polifemo",
+        "canto_sereias",
+        "estreito_cila",
+        "retorno_itaca"
+    };
+    const TipoObjetivo tipos[] = {
+        OBJETIVO_COLETA,
+        OBJETIVO_INTERACAO,
+        OBJETIVO_INTERACAO,
+        OBJETIVO_COLETA
+    };
+    const int quantidades[] = { 3, 3, 3, 1 };
+    const int inimigos[] = { 1, 2, 3, 2 };
+
+    for (int i = 0; i < quantidadeConfiguracoesFase(); i++) {
+        const ConfiguracaoFase *configuracao = obterConfiguracaoFase(i);
+        Fase fase;
+
+        assert(configuracao != NULL);
+        assert(strcmp(configuracao->id, ids[i]) == 0);
+        assert(configuracao->objetivo.tipo == tipos[i]);
+        assert(configuracao->objetivo.quantidadeNecessaria == quantidades[i]);
+        assert(configuracao->quantidadeItens == quantidades[i]);
+        assert(configuracao->encontro.quantidadeInimigos == inimigos[i]);
+        assert(configuracao->encontro.recompensaNarrativa != NULL);
+        assert(configuracao->encontro.inimigos[0].visual.modelo != NULL);
+
+        assert(criarFase(&fase, configuracao));
+        assert(fase.configuracao == configuracao);
+        assert(fase.objetivo.tipo == tipos[i]);
+        assert(fase.quantidadeInimigos == inimigos[i]);
+        assert(fase.indicePortao >= 0);
+    }
 }
 
 static void testarConfiguracaoAlternativa(void)
@@ -86,6 +124,7 @@ static void testarConfiguracaoAlternativa(void)
 int main(void)
 {
     testarTabelaPrincipal();
+    testarFasesMitologicas();
     testarConfiguracaoAlternativa();
 
     puts("Testes das configuracoes de fase passaram.");

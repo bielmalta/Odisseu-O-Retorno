@@ -145,7 +145,7 @@ void atualizarMiraFase(Fase *fase, Ray raio)
     }
 
     for (int i = 0; i < fase->quantidadeItens; i++) {
-        if (fase->itens[i].coletado) {
+        if (fase->itens[i].concluido) {
             continue;
         }
 
@@ -182,9 +182,12 @@ static void abrirPortao(Fase *fase)
     }
 }
 
-static void registrarColeta(Fase *fase)
+static void registrarInteracao(Fase *fase)
 {
     Objetivo *objetivo = &fase->objetivo;
+    const char *verbo = objetivo->tipo == OBJETIVO_COLETA
+                            ? "Coletou"
+                            : "Ativou";
 
     registrarProgresso(objetivo, 1);
     if (!verificarObjetivo(objetivo)) {
@@ -192,7 +195,8 @@ static void registrarColeta(Fase *fase)
         snprintf(
             texto,
             sizeof texto,
-            "Coletou %s (%d/%d)",
+            "%s %s (%d/%d)",
+            verbo,
             objetivo->nomeAlvo,
             objetivo->progresso,
             objetivo->necessario
@@ -208,13 +212,15 @@ static void registrarColeta(Fase *fase)
 bool interagir(Fase *fase)
 {
     if (fase == NULL || fase->etapa != ETAPA_EXPLORACAO ||
-        fase->objetivo.tipo != OBJETIVO_COLETA || fase->itemAlvo < 0) {
+        (fase->objetivo.tipo != OBJETIVO_COLETA &&
+         fase->objetivo.tipo != OBJETIVO_INTERACAO) ||
+        fase->itemAlvo < 0) {
         return false;
     }
 
-    fase->itens[fase->itemAlvo].coletado = true;
+    fase->itens[fase->itemAlvo].concluido = true;
     fase->itemAlvo = -1;
-    registrarColeta(fase);
+    registrarInteracao(fase);
     return true;
 }
 
