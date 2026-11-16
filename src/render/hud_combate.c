@@ -61,7 +61,16 @@ static Rectangle retanguloContinuar(int largura, int altura)
 {
     return (Rectangle){
         (float)(largura - LARGURA_BOTAO_RESULTADO) / 2.0f,
-        (float)altura / 2.0f + 40.0f,
+        (float)altura / 2.0f + 25.0f,
+        (float)LARGURA_BOTAO_RESULTADO, (float)ALTURA_BOTAO
+    };
+}
+
+static Rectangle retanguloMenuResultado(int largura, int altura)
+{
+    return (Rectangle){
+        (float)(largura - LARGURA_BOTAO_RESULTADO) / 2.0f,
+        (float)altura / 2.0f + 95.0f,
         (float)LARGURA_BOTAO_RESULTADO, (float)ALTURA_BOTAO
     };
 }
@@ -84,6 +93,7 @@ EntradaCombate lerEntradaCombate(void)
                            IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN);
     entrada.teclaAnterior = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP);
     entrada.teclaContinuar = IsKeyPressed(KEY_ENTER);
+    entrada.teclaMenu = IsKeyPressed(KEY_M);
     entrada.clique = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     entrada.mouse = GetMousePosition();
 
@@ -106,6 +116,15 @@ ComandoCombate interpretarEntradaCombate(
         const bool clicouContinuar =
             entrada.clique &&
             CheckCollisionPointRec(entrada.mouse, retanguloContinuar(largura, altura));
+        const bool clicouMenu =
+            entrada.clique &&
+            CheckCollisionPointRec(
+                entrada.mouse, retanguloMenuResultado(largura, altura)
+            );
+
+        if (entrada.teclaMenu || clicouMenu) {
+            return COMANDO_MENU;
+        }
 
         return (entrada.teclaContinuar || clicouContinuar)
                    ? COMANDO_CONTINUAR : COMANDO_NENHUM;
@@ -451,6 +470,10 @@ static void desenharResultado(const Combate *combate, int largura, int altura)
     desenharBotao(
         retanguloContinuar(largura, altura), botao,
         vitoria ? (Color){ 60, 140, 70, 255 } : (Color){ 190, 60, 50, 255 }, true
+    );
+    desenharBotao(
+        retanguloMenuResultado(largura, altura), "[M] Menu principal",
+        (Color){ 70, 80, 100, 255 }, true
     );
 }
 

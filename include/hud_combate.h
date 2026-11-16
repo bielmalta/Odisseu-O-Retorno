@@ -18,7 +18,8 @@ typedef enum {
     COMANDO_NENHUM,
     COMANDO_ATACAR,
     COMANDO_DEFENDER,
-    COMANDO_CONTINUAR /* depois da vitoria ou da derrota */
+    COMANDO_CONTINUAR, /* depois da vitoria ou da derrota */
+    COMANDO_MENU       /* volta ao menu depois do resultado */
 } ComandoCombate;
 
 /* Entrada ja lida da Raylib; interpretarEntradaCombate() nao a chama. */
@@ -28,6 +29,7 @@ typedef struct {
     bool teclaProximo;   /* TAB, seta direita ou para baixo */
     bool teclaAnterior;  /* seta esquerda ou para cima */
     bool teclaContinuar; /* ENTER */
+    bool teclaMenu;      /* M, depois do resultado */
     bool clique;         /* botao esquerdo do mouse apertado neste quadro */
     Vector2 mouse;
 } EntradaCombate;
@@ -38,7 +40,7 @@ EntradaCombate lerEntradaCombate(void);
  * ou clique no inimigo) e devolve o comando pedido:
  *   - atacar/defender so existem na vez de Odisseu (fora dela os botoes
  *     ficam desabilitados e a entrada e ignorada); atacar exige um alvo;
- *   - continuar so existe depois de o combate acabar.
+ *   - continuar e menu so existem depois de o combate acabar.
  * `largura` e `altura` sao o tamanho da janela, que define onde ficam os
  * botoes. */
 ComandoCombate interpretarEntradaCombate(

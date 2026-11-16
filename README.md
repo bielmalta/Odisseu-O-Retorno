@@ -59,6 +59,10 @@ Em caso de derrota, o jogador poderá reiniciar o confronto.
 | Botão esquerdo do mouse | Selecionar opções da interface |
 | ESC | Pausar ou retomar o jogo |
 
+No menu principal, `Enter` inicia uma nova partida e `S` ou `Esc` fecha o
+jogo. Durante a pausa, `Enter` ou `Esc` retoma, `M` volta ao menu
+principal e, se um combate estiver em andamento, `R` reinicia o confronto.
+
 Durante os combates, o jogador poderá selecionar as ações de atacar e defender pela interface.
 
 | Controle no combate | Ação |
@@ -67,8 +71,11 @@ Durante os combates, o jogador poderá selecionar as ações de atacar e defende
 | D ou clique em **Defender** | Reduzir o próximo golpe recebido (só no turno de Odisseu) |
 | Tab, setas ou clique no inimigo | Trocar o alvo selecionado |
 | Enter ou clique no botão | Continuar depois da vitória ou tentar de novo depois da derrota |
+| M ou clique em **Menu principal** | Voltar ao menu depois da vitória ou derrota |
 
-Os controles serão implementados nos próximos commits e poderão ser ajustados durante o desenvolvimento.
+Depois do encerramento do combate, atacar, defender e trocar o alvo ficam
+bloqueados. A tela de resultado aceita apenas continuar, tentar novamente,
+voltar ao menu ou abrir a pausa.
 
 ## Tecnologias
 
@@ -109,7 +116,10 @@ cmake -S . -B build -DODISSEU_FETCH_RAYLIB=OFF
 
 Após a compilação, execute o arquivo `odisseu_o_retorno.exe` gerado na pasta `build/bin` ou `build/bin/Release`, dependendo do gerador utilizado.
 
-No estágio inicial do projeto, a aplicação apresenta apenas uma janela Raylib. A exploração, os combates e as demais funcionalidades serão implementados nos próximos commits.
+Ao abrir, o jogo apresenta o menu principal. Uma nova partida inicia a fase da
+Caverna de Polifemo, com exploração em primeira pessoa, coleta do objetivo e
+combate por turnos. O menu de pausa funciona tanto na exploração quanto no
+combate, preservando o estado até o jogador retomar.
 
 ## Arquitetura inicial
 

@@ -16,6 +16,7 @@
 #include "ia_inimigo.h"
 #include "painel_combate.h"
 #include "personagem.h"
+#include "telas_jogo.h"
 
 enum {
     LARGURA_INICIAL = 1280,
@@ -25,7 +26,9 @@ enum {
 
 static Jogador jogador;
 static Fase fase;
-static EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
+static EstadoJogo estadoAtual = ESTADO_MENU;
+static EstadoJogo estadoAntesDaPausa = ESTADO_EXPLORACAO;
+static bool sairSolicitado;
 
 
 /* Controlador de combate e participantes do encontro inicial. */
@@ -118,18 +121,57 @@ static void reiniciarConfronto(void)
     iniciarConfronto();
 }
 
+/* Reconstroi toda a fase e garante que nenhuma lista ou animacao da partida
+ * anterior sobreviva ao reinicio ou ao retorno para o menu. */
+static void prepararNovaPartida(void)
+{
+    definirControleJogador(&jogador, false);
+    finalizarCombate(&combate);
+    criarFaseBase(&fase);
+    inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
+    iniciarEsperaTurnoInimigo(&esperaInimigo);
+    iniciarAnimacaoCombate(&animacao);
+    criarParticipantes();
+    estadoAntesDaPausa = ESTADO_EXPLORACAO;
+}
+
+static void iniciarNovaPartida(void)
+{
+    prepararNovaPartida();
+    definirEstado(ESTADO_EXPLORACAO);
+}
+
+static void voltarAoMenu(void)
+{
+    prepararNovaPartida();
+    definirEstado(ESTADO_MENU);
+}
+
+static void pausarJogo(void)
+{
+    if (estadoAtual != ESTADO_EXPLORACAO &&
+        estadoAtual != ESTADO_COMBATE) {
+        return;
+    }
+
+    estadoAntesDaPausa = estadoAtual;
+    definirEstado(ESTADO_PAUSA);
+}
+
+static void retomarJogo(void)
+{
+    if (estadoAtual == ESTADO_PAUSA) {
+        definirEstado(estadoAntesDaPausa);
+    }
+}
+
 static void inicializarJogo(void)
 {
     SetTargetFPS(FPS_ALVO);
     SetExitKey(KEY_NULL);
 
-    criarFaseBase(&fase);
-    inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
-
     /* Inicializa o controlador de combate. */
     inicializarCombate(&combate);
-    iniciarEsperaTurnoInimigo(&esperaInimigo);
-    criarParticipantes();
 
     /* Cada ataque e defesa vira uma animacao; sons e mensagens saem nos
      * marcos dela. O dano ja foi resolvido pela logica nesse instante. */
@@ -137,7 +179,9 @@ static void inicializarJogo(void)
     registrarObservadorCombate(observarEventoAnimacao, &animacao);
     iniciarAudioCombate(&sons);
 
-    definirEstado(ESTADO_EXPLORACAO);
+    sairSolicitado = false;
+    prepararNovaPartida();
+    definirEstado(ESTADO_MENU);
 }
 
 /* Avanca a animacao e reage aos marcos: toca o som e, no impacto ou na
@@ -201,6 +245,11 @@ static void atualizarConfronto(float deltaTempo)
             reiniciarConfronto();
         }
         break;
+    case COMANDO_MENU:
+        if (!animando) {
+            voltarAoMenu();
+        }
+        break;
     case COMANDO_NENHUM:
         break;
     }
@@ -209,14 +258,56 @@ static void atualizarConfronto(float deltaTempo)
 
 static void atualizarJogo(float deltaTempo)
 {
-    if (IsKeyPressed(KEY_ESCAPE) && estadoAtual != ESTADO_COMBATE) {
-        definirEstado(
-            estadoAtual == ESTADO_PAUSA ? ESTADO_EXPLORACAO : ESTADO_PAUSA
+    if (estadoAtual == ESTADO_MENU) {
+        const AcaoTelaJogo acao = interpretarEntradaMenu(
+            lerEntradaTelaJogo(), GetScreenWidth(), GetScreenHeight()
         );
+
+        if (acao == ACAO_TELA_JOGAR) {
+            iniciarNovaPartida();
+        } else if (acao == ACAO_TELA_SAIR) {
+            sairSolicitado = true;
+        }
+        return;
+    }
+
+    if (estadoAtual == ESTADO_PAUSA) {
+        const bool pausouCombate = estadoAntesDaPausa == ESTADO_COMBATE;
+        const AcaoTelaJogo acao = interpretarEntradaPausa(
+            lerEntradaTelaJogo(), pausouCombate,
+            GetScreenWidth(), GetScreenHeight()
+        );
+
+        switch (acao) {
+        case ACAO_TELA_RETOMAR:
+            retomarJogo();
+            break;
+        case ACAO_TELA_REINICIAR:
+            if (pausouCombate) {
+                reiniciarConfronto();
+            }
+            break;
+        case ACAO_TELA_MENU:
+            voltarAoMenu();
+            break;
+        case ACAO_TELA_NENHUMA:
+        case ACAO_TELA_JOGAR:
+        case ACAO_TELA_SAIR:
+            break;
+        }
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        pausarJogo();
+        return;
     }
 
     if (estadoAtual == ESTADO_COMBATE) {
         atualizarConfronto(deltaTempo);
+        if (estadoAtual == ESTADO_MENU) {
+            return;
+        }
     }
 
     if (estadoAtual == ESTADO_EXPLORACAO && IsKeyPressed(KEY_E)) {
@@ -251,10 +342,18 @@ static void atualizarJogo(float deltaTempo)
 static void desenharJogo(void)
 {
     const char *nomeEstado = "EXPLORACAO";
-    const bool combatendo = estadoAtual == ESTADO_COMBATE;
+    const bool pausado = estadoAtual == ESTADO_PAUSA;
+    const bool combatendo = estadoAtual == ESTADO_COMBATE ||
+        (pausado && estadoAntesDaPausa == ESTADO_COMBATE);
     PoseJogador poseJogador = {0};
     PoseInimigo posesInimigos[FASE_MAX_INIMIGOS] = {0};
     Camera3D camera = jogador.camera;
+
+    if (estadoAtual == ESTADO_MENU) {
+        desenharTelaMenu(GetScreenWidth(), GetScreenHeight());
+        DrawFPS(12, 12);
+        return;
+    }
 
     if (combatendo) {
         nomeEstado = "COMBATE";
@@ -264,7 +363,7 @@ static void desenharJogo(void)
             posesInimigos[i] = poseDoInimigo(&animacao, painel.inimigos[i]);
         }
         camera = camaraComEfeitos(jogador.camera, &poseJogador, (float)GetTime());
-    } else if (estadoAtual == ESTADO_PAUSA) {
+    } else if (pausado) {
         nomeEstado = "PAUSA";
     }
 
@@ -296,6 +395,13 @@ static void desenharJogo(void)
         DrawText("ESC pausa e retoma", 12, GetScreenHeight() - 28, 18, BLACK);
     }
 
+    if (pausado) {
+        desenharTelaPausa(
+            GetScreenWidth(), GetScreenHeight(),
+            estadoAntesDaPausa == ESTADO_COMBATE
+        );
+    }
+
     DrawFPS(12, 12);
 }
 
@@ -322,7 +428,7 @@ int main(void)
 
     inicializarJogo();
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !sairSolicitado) {
         /* Um quadro muito longo (janela arrastada) nao pode pular animacoes. */
         float deltaTempo = GetFrameTime();
 

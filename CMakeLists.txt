@@ -52,6 +52,7 @@ add_executable(
     src/render/fase_render.c
     src/render/hud_combate.c
     src/render/jogador.c
+    src/render/telas_jogo.c
 )
 
 target_include_directories(
@@ -146,3 +147,16 @@ add_test(NAME painel_combate COMMAND teste_painel_combate)
 add_executable(teste_animacao_combate tests/teste_animacao_combate.c)
 target_link_libraries(teste_animacao_combate PRIVATE odisseu_core)
 add_test(NAME animacao_combate COMMAND teste_animacao_combate)
+
+add_executable(
+    teste_telas_jogo
+    tests/teste_telas_jogo.c
+    src/render/telas_jogo.c
+)
+target_include_directories(
+    teste_telas_jogo
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_link_libraries(teste_telas_jogo PRIVATE raylib)
+add_test(NAME telas_jogo COMMAND teste_telas_jogo)
