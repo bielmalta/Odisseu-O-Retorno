@@ -14,6 +14,7 @@
 #include "efeitos_combate.h"
 #include "hud_combate.h"
 #include "ia_inimigo.h"
+#include "jornada.h"
 #include "painel_combate.h"
 #include "personagem.h"
 #include "telas_jogo.h"
@@ -26,6 +27,7 @@ enum {
 
 static Jogador jogador;
 static Fase fase;
+static Jornada jornada;
 static EstadoJogo estadoAtual = ESTADO_MENU;
 static EstadoJogo estadoAntesDaPausa = ESTADO_EXPLORACAO;
 static bool sairSolicitado;
@@ -38,7 +40,6 @@ static PainelCombate painel; /* dados mostrados pelo HUD de combate */
 static AnimacaoCombate animacao; /* tempo das acoes vistas na tela */
 static EfeitosSonoros sons;
 
-static Personagem odisseu;
 static Personagem inimigosFase[FASE_MAX_INIMIGOS];
 static Personagem *inimigosCombate[FASE_MAX_INIMIGOS];
 
@@ -70,7 +71,7 @@ static void iniciarConfronto(void)
     /* Prepara a lista circular com os participantes. */
     if (!prepararCombate(
             &combate,
-            &odisseu,
+            &jornada.odisseu,
             inimigosCombate,
             fase.quantidadeInimigos)) {
         TraceLog(LOG_ERROR, "Falha ao preparar combate.");
@@ -99,8 +100,8 @@ static void iniciarConfronto(void)
     );
 }
 
-/* Cria os participantes definidos pela configuracao, com a vida cheia. */
-static bool criarParticipantes(void)
+/* Cria os inimigos da etapa sem reconstruir o Odisseu persistente. */
+static bool criarInimigosDaFase(void)
 {
     const ConfiguracaoFase *configuracao = fase.configuracao;
 
@@ -110,7 +111,6 @@ static bool criarParticipantes(void)
         return false;
     }
 
-    odisseu = criarPersonagemConfigurada(&configuracao->heroi);
     for (int i = 0; i < configuracao->encontro.quantidadeInimigos; i++) {
         inimigosFase[i] = criarPersonagemConfigurada(
             &configuracao->encontro.inimigos[i].personagem
@@ -124,6 +124,7 @@ static bool criarParticipantes(void)
 static void concluirConfronto(void)
 {
     finalizarCombate(&combate);
+    registrarVitoriaJornada(&jornada);
     encerrarConfronto(&fase);
     definirEstado(ESTADO_EXPLORACAO);
 }
@@ -132,7 +133,9 @@ static void concluirConfronto(void)
 static void reiniciarConfronto(void)
 {
     finalizarCombate(&combate);
-    if (criarParticipantes()) {
+    jornada.odisseu.vida = jornada.odisseu.vidaMaxima;
+    jornada.odisseu.bonusDefesa = 0;
+    if (criarInimigosDaFase()) {
         iniciarConfronto();
     }
 }
@@ -143,11 +146,14 @@ static void prepararNovaPartida(void)
 {
     definirControleJogador(&jogador, false);
     finalizarCombate(&combate);
-    criarFaseBase(&fase);
+    if (!iniciarJornada(&jornada, &fase)) {
+        TraceLog(LOG_ERROR, "Falha ao iniciar a jornada.");
+        return;
+    }
     inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
     iniciarEsperaTurnoInimigo(&esperaInimigo);
     iniciarAnimacaoCombate(&animacao);
-    if (!criarParticipantes()) {
+    if (!criarInimigosDaFase()) {
         TraceLog(LOG_ERROR, "Falha ao criar participantes configurados.");
     }
     estadoAntesDaPausa = ESTADO_EXPLORACAO;
@@ -289,6 +295,13 @@ static void atualizarJogo(float deltaTempo)
         return;
     }
 
+    if (estadoAtual == ESTADO_RETORNO_AO_LAR) {
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
+            voltarAoMenu();
+        }
+        return;
+    }
+
     if (estadoAtual == ESTADO_PAUSA) {
         const bool pausouCombate = estadoAntesDaPausa == ESTADO_COMBATE;
         const AcaoTelaJogo acao = interpretarEntradaPausa(
@@ -352,6 +365,26 @@ static void atualizarJogo(float deltaTempo)
 
     atualizarFase(&fase, jogador.posicao, deltaTempo);
 
+    if (fase.etapa == ETAPA_CONCLUIDA) {
+        const ResultadoAvancoJornada resultado =
+            avancarJornada(&jornada, &fase);
+
+        if (resultado == JORNADA_PROXIMA_FASE) {
+            inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
+            iniciarEsperaTurnoInimigo(&esperaInimigo);
+            iniciarAnimacaoCombate(&animacao);
+            if (!criarInimigosDaFase()) {
+                TraceLog(LOG_ERROR, "Falha ao carregar a proxima etapa.");
+                voltarAoMenu();
+                return;
+            }
+            definirEstado(ESTADO_EXPLORACAO);
+            TraceLog(LOG_INFO, "Jornada avancou para: %s", fase.titulo);
+        } else if (resultado == JORNADA_RETORNO_AO_LAR) {
+            definirEstado(ESTADO_RETORNO_AO_LAR);
+        }
+    }
+
     if (fase.etapa == ETAPA_CONFRONTO && estadoAtual == ESTADO_EXPLORACAO) {
         iniciarConfronto();
     }
@@ -367,6 +400,25 @@ static void desenharJogo(void)
     PoseInimigo posesInimigos[FASE_MAX_INIMIGOS] = {0};
     Camera3D camera = jogador.camera;
 
+    if (estadoAtual == ESTADO_RETORNO_AO_LAR) {
+        ClearBackground((Color){ 24, 32, 52, 255 });
+        DrawText(
+            "Odisseu retornou ao lar",
+            GetScreenWidth() / 2 - 190,
+            GetScreenHeight() / 2 - 30,
+            32,
+            GOLD
+        );
+        DrawText(
+            "ENTER ou ESC para voltar ao menu",
+            GetScreenWidth() / 2 - 180,
+            GetScreenHeight() / 2 + 24,
+            20,
+            RAYWHITE
+        );
+        return;
+    }
+
     if (estadoAtual == ESTADO_MENU) {
         desenharTelaMenu(GetScreenWidth(), GetScreenHeight());
         DrawFPS(12, 12);
@@ -375,7 +427,7 @@ static void desenharJogo(void)
 
     if (combatendo) {
         nomeEstado = "COMBATE";
-        poseJogador = poseDoJogador(&animacao, &odisseu);
+        poseJogador = poseDoJogador(&animacao, &jornada.odisseu);
         for (int i = 0; i < fase.quantidadeInimigos &&
                         i < painel.quantidadeInimigos; i++) {
             posesInimigos[i] = poseDoInimigo(&animacao, painel.inimigos[i]);

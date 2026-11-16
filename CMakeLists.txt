@@ -48,6 +48,7 @@ add_executable(
     src/jogo/cenario.c
     src/jogo/configuracao_fases.c
     src/jogo/fase.c
+    src/jogo/jornada.c
     src/render/audio_combate.c
     src/render/efeitos_combate.c
     src/render/fase_render.c
@@ -181,3 +182,19 @@ target_include_directories(
 )
 target_link_libraries(teste_configuracao_fases PRIVATE odisseu_core raylib)
 add_test(NAME configuracao_fases COMMAND teste_configuracao_fases)
+
+add_executable(
+    teste_jornada
+    tests/teste_jornada.c
+    src/jogo/cenario.c
+    src/jogo/configuracao_fases.c
+    src/jogo/fase.c
+    src/jogo/jornada.c
+)
+target_include_directories(
+    teste_jornada
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_link_libraries(teste_jornada PRIVATE odisseu_core raylib)
+add_test(NAME jornada COMMAND teste_jornada)
