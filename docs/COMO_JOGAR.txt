@@ -1,0 +1,29 @@
+Odisseu: O Ultimo Retorno - versao 1.0.0
+Turma A - Algoritmos e Estruturas de Dados
+
+COMO JOGAR
+1. Extraia o .zip inteiro para uma pasta.
+2. De dois cliques em odisseu_o_retorno.exe.
+   Nao precisa instalar nada: o jogo nao depende de IDE, compilador
+   ou DLL extra.
+3. Mantenha a pasta "assets" ao lado do .exe. Sem ela o jogo roda,
+   mas fica sem som.
+
+CONTROLES
+W, A, S, D ........ andar
+Mouse ............. olhar
+Shift ............. correr
+Espaco ............ pular
+E ................. interagir
+Esc ............... pausar / retomar
+Enter ............. confirmar nos menus
+
+No combate, use os botoes do painel (ou os atalhos mostrados na tela)
+para atacar e defender.
+
+Se o Windows mostrar "O Windows protegeu o computador", clique em
+"Mais informacoes" e depois em "Executar assim mesmo". O aviso aparece
+porque o .exe nao tem assinatura digital.
+
+Grupo: Gabriel Gondim Malta, Arthur de Almeida Oliveira, Marcio
+Rodriguez Perez, Guilherme Silva Guimaraes, Helio Moraes.

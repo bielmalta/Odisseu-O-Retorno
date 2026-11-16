@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     OdisseuORetorno
-    VERSION 0.1.0
+    VERSION 1.0.0
     DESCRIPTION "Jogo 3D em primeira pessoa inspirado em A Odisseia"
     LANGUAGES C
 )
@@ -86,6 +86,57 @@ add_custom_command(
             "$<TARGET_FILE_DIR:odisseu_o_retorno>/assets"
     COMMENT "Copiando assets para a pasta do executavel"
 )
+
+
+if(WIN32)
+    set_target_properties(
+        odisseu_o_retorno
+        PROPERTIES
+            WIN32_EXECUTABLE $<CONFIG:Release>
+    )
+
+    if(MINGW)
+        target_link_options(
+            odisseu_o_retorno
+            PRIVATE
+                $<$<CONFIG:Release>:-static>
+        )
+    endif()
+endif()
+
+install(
+    TARGETS odisseu_o_retorno
+    RUNTIME DESTINATION .
+    COMPONENT jogo
+)
+
+file(
+    GLOB_RECURSE ODISSEU_ASSETS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/*"
+)
+list(FILTER ODISSEU_ASSETS EXCLUDE REGEX "\\.gitkeep$")
+
+foreach(arquivo IN LISTS ODISSEU_ASSETS)
+    get_filename_component(pasta "${arquivo}" DIRECTORY)
+    install(FILES "${arquivo}" DESTINATION "${pasta}" COMPONENT jogo)
+endforeach()
+
+install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/docs/COMO_JOGAR.txt"
+    DESTINATION .
+    COMPONENT jogo
+)
+
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_PACKAGE_NAME "Odisseu-O-Ultimo-Retorno")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL jogo)
+set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+set(CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY ON)
+include(CPack)
 
 
 add_library(
