@@ -1,6 +1,6 @@
 #include "acoes_combate.h"
 
-#include <stdio.h>
+#include <stddef.h>
 
 static ObservadorCombate observadorAtual = NULL;
 static void *contextoObservador = NULL;
@@ -112,10 +112,6 @@ bool atacarNoCombate(Combate *combate, Personagem *alvo)
         return false;
     }
 
-    printf("[RODADA %u] %s atacou %s: %d de dano (vida %d/%d).\n",
-           combate->rodada, atacante->nome, alvo->nome,
-           dano, alvo->vida, alvo->vidaMaxima);
-
     concluirAcaoCombate(combate);
     return true;
 }
@@ -126,10 +122,6 @@ bool defenderNoCombate(Combate *combate)
         !realizarDefesa(combate->participanteAtual)) {
         return false;
     }
-
-    printf("[RODADA %u] %s se defendeu (+%d de defesa no proximo golpe).\n",
-           combate->rodada, combate->participanteAtual->nome,
-           BONUS_DEFESA_ACAO);
 
     concluirAcaoCombate(combate);
     return true;

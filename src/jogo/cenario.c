@@ -54,30 +54,3 @@ void removerCaixaCenario(Cenario *cenario, int indice)
         { 0.0f, CENARIO_Y_REMOVIDA, 0.0f }
     };
 }
-
-void desenharCenario(const Cenario *cenario)
-{
-    const float passoGrade = cenario->tamanhoChao.x /
-                             (float)cenario->divisoesGrade;
-
-    DrawPlane(
-        (Vector3){ 0, 0, 0 }, cenario->tamanhoChao, cenario->corChao
-    );
-    DrawGrid(cenario->divisoesGrade, passoGrade);
-
-    for (int i = 0; i < cenario->quantidade; i++) {
-        const BoundingBox b = cenario->caixas[i];
-        if (b.max.y <= CENARIO_Y_REMOVIDA) {
-            continue; /* caixa removida */
-        }
-
-        const Vector3 centro = {
-            (b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, (b.min.z + b.max.z) / 2
-        };
-        const Vector3 tamanho = {
-            b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z
-        };
-        DrawCubeV(centro, tamanho, cenario->cores[i]);
-        DrawCubeWiresV(centro, tamanho, (Color){ 60, 50, 40, 255 });
-    }
-}

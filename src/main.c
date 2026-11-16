@@ -18,6 +18,7 @@
 #include "narrativa.h"
 #include "painel_combate.h"
 #include "personagem.h"
+#include "ritmo_combate.h"
 #include "tela_narrativa.h"
 #include "telas_jogo.h"
 
@@ -123,6 +124,14 @@ static bool criarInimigosDaFase(void)
     return true;
 }
 
+static bool carregarFaseAtual(void)
+{
+    return criarFase(
+        &fase,
+        obterConfiguracaoFase(jornada.indiceEtapaAtual)
+    );
+}
+
 /* Vitoria confirmada: libera a saida e volta a explorar. */
 static void concluirConfronto(void)
 {
@@ -147,9 +156,24 @@ static void reiniciarConfronto(void)
  * anterior sobreviva ao reinicio ou ao retorno para o menu. */
 static void prepararNovaPartida(void)
 {
+    const ConfiguracaoFase *configuracaoInicial;
+    Personagem heroi;
+
     definirControleJogador(&jogador, false);
     finalizarCombate(&combate);
-    if (!iniciarJornada(&jornada, &fase)) {
+
+    configuracaoInicial = obterConfiguracaoFase(0);
+    if (configuracaoInicial == NULL) {
+        TraceLog(LOG_ERROR, "Nenhuma fase configurada para a jornada.");
+        return;
+    }
+
+    heroi = criarPersonagemConfigurada(&configuracaoInicial->heroi);
+    if (!iniciarJornada(
+            &jornada,
+            heroi,
+            quantidadeConfiguracoesFase()) ||
+        !carregarFaseAtual()) {
         TraceLog(LOG_ERROR, "Falha ao iniciar a jornada.");
         return;
     }
@@ -386,9 +410,18 @@ static void atualizarJogo(float deltaTempo)
 
     if (fase.etapa == ETAPA_CONCLUIDA) {
         const ResultadoAvancoJornada resultado =
-            avancarJornada(&jornada, &fase);
+            avancarJornada(
+                &jornada,
+                verificarObjetivo(&fase.objetivo),
+                fase.etapa == ETAPA_CONCLUIDA
+            );
 
         if (resultado == JORNADA_PROXIMA_FASE) {
+            if (!carregarFaseAtual()) {
+                TraceLog(LOG_ERROR, "Falha ao carregar a proxima etapa.");
+                voltarAoMenu();
+                return;
+            }
             definirControleJogador(&jogador, false);
             inicializarJogador(&jogador, fase.pontoInicial, 0.0f);
             iniciarEsperaTurnoInimigo(&esperaInimigo);

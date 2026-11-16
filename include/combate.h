@@ -7,6 +7,7 @@
 #include "lista_turnos.h"
 #include "personagem.h"
 
+/* Regras de combate por turnos em C puro, sem Raylib ou interface. */
 /* Estados do controlador de combate. */
 typedef enum {
     COMBATE_SETUP,

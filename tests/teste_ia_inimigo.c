@@ -6,6 +6,7 @@
 #include "combate.h"
 #include "ia_inimigo.h"
 #include "personagem.h"
+#include "ritmo_combate.h"
 
 /* Testes da IA basica dos inimigos (commit 15). Nao abrem janela Raylib. */
 

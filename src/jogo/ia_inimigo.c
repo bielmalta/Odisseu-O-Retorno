@@ -1,6 +1,6 @@
 #include "ia_inimigo.h"
 
-#include <stdio.h>
+#include <stddef.h>
 
 #include "acoes_combate.h"
 
@@ -83,50 +83,8 @@ bool executarTurnoInimigo(Combate *combate)
     }
 
     if (!agiu) {
-        printf("[RODADA %u] %s nao tinha acao possivel e passou a vez.\n",
-               combate->rodada, inimigo->nome);
         concluirAcaoCombate(combate);
     }
 
     return true;
-}
-
-void iniciarEsperaTurnoInimigo(EsperaTurnoInimigo *espera)
-{
-    if (espera == NULL) {
-        return;
-    }
-
-    espera->participante = NULL;
-    espera->rodada = 0;
-    espera->turnosConcluidos = -1;
-    espera->decorrido = 0.0f;
-}
-
-bool aguardarTurnoInimigo(EsperaTurnoInimigo *espera,
-                          const Combate *combate,
-                          float deltaTempo)
-{
-    if (espera == NULL || combate == NULL ||
-        combate->estado != COMBATE_ENEMY_TURN) {
-        iniciarEsperaTurnoInimigo(espera);
-        return true;
-    }
-
-    /* Um novo turno inimigo (outro participante, rodada ou posicao)
-     * reinicia a contagem. */
-    if (espera->participante != combate->participanteAtual ||
-        espera->rodada != combate->rodada ||
-        espera->turnosConcluidos != combate->turnosConcluidos) {
-        espera->participante = combate->participanteAtual;
-        espera->rodada = combate->rodada;
-        espera->turnosConcluidos = combate->turnosConcluidos;
-        espera->decorrido = 0.0f;
-    }
-
-    if (deltaTempo > 0.0f) {
-        espera->decorrido += deltaTempo;
-    }
-
-    return espera->decorrido >= IA_INTERVALO_TURNO;
 }

@@ -13,10 +13,6 @@
 /* Abaixo desta porcentagem da vida maxima o inimigo passa a se defender. */
 #define IA_LIMIAR_DEFESA_PORCENTO 30
 
-/* Pausa, em segundos, antes de o inimigo agir. Serve so para o jogador
- * enxergar de quem e a vez; a decisao e a acao nao dependem dela. */
-#define IA_INTERVALO_TURNO 0.6f
-
 typedef enum {
     ACAO_INIMIGO_ATACAR,
     ACAO_INIMIGO_DEFENDER
@@ -43,23 +39,5 @@ AcaoInimigo escolherAcaoInimigo(const Personagem *inimigo,
  * encerrado mesmo assim, para o combate nunca travar.
  * Devolve false se nao for a vez de um inimigo. */
 bool executarTurnoInimigo(Combate *combate);
-
-/* Controle do intervalo visual antes da acao do inimigo. */
-typedef struct {
-    const Personagem *participante;
-    unsigned int rodada;
-    int turnosConcluidos;
-    float decorrido;
-} EsperaTurnoInimigo;
-
-void iniciarEsperaTurnoInimigo(EsperaTurnoInimigo *espera);
-
-/* Chamada a cada quadro antes de atualizarCombate(). Devolve true quando o
- * combate pode ser atualizado: sempre fora do turno inimigo e, no turno
- * inimigo, depois de IA_INTERVALO_TURNO segundos. Nao bloqueia o laco do
- * jogo: apenas soma o tempo do quadro. */
-bool aguardarTurnoInimigo(EsperaTurnoInimigo *espera,
-                          const Combate *combate,
-                          float deltaTempo);
 
 #endif

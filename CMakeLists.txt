@@ -48,8 +48,8 @@ add_executable(
     src/jogo/cenario.c
     src/jogo/configuracao_fases.c
     src/jogo/fase.c
-    src/jogo/jornada.c
     src/render/audio_combate.c
+    src/render/cenario_render.c
     src/render/efeitos_combate.c
     src/render/fase_render.c
     src/render/hud_combate.c
@@ -89,7 +89,7 @@ add_custom_command(
 
 
 add_library(
-    odisseu_core
+    odisseu_regras
     STATIC
         src/core/personagem.c
         src/estruturas/lista_turnos.c
@@ -97,60 +97,92 @@ add_library(
         src/jogo/combate.c
         src/jogo/acoes_combate.c
         src/jogo/ia_inimigo.c
-        src/jogo/painel_combate.c
-        src/jogo/interpolacao.c
-        src/jogo/animacao_combate.c
-        src/jogo/narrativa.c
+        src/jogo/jornada.c
         src/jogo/objetivo.c
 )
 
 target_include_directories(
-    odisseu_core
+    odisseu_regras
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
 if(MSVC)
-    target_compile_options(odisseu_core PRIVATE /W4)
+    target_compile_options(odisseu_regras PRIVATE /W4)
 else()
-    target_compile_options(odisseu_core PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(odisseu_regras PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_link_libraries(odisseu_o_retorno PRIVATE odisseu_core)
+add_library(
+    odisseu_apresentacao
+    STATIC
+        src/jogo/painel_combate.c
+        src/jogo/interpolacao.c
+        src/jogo/animacao_combate.c
+        src/jogo/narrativa.c
+        src/render/ritmo_combate.c
+)
+
+target_include_directories(
+    odisseu_apresentacao
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+target_link_libraries(odisseu_apresentacao PUBLIC odisseu_regras)
+
+if(MSVC)
+    target_compile_options(odisseu_apresentacao PRIVATE /W4)
+else()
+    target_compile_options(
+        odisseu_apresentacao
+        PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+    )
+endif()
+
+target_link_libraries(
+    odisseu_o_retorno
+    PRIVATE
+        odisseu_apresentacao
+        odisseu_regras
+)
 
 
 enable_testing()
 
 add_executable(teste_lista_turnos tests/teste_lista_turnos.c)
-target_link_libraries(teste_lista_turnos PRIVATE odisseu_core)
+target_link_libraries(teste_lista_turnos PRIVATE odisseu_regras)
 add_test(NAME lista_turnos COMMAND teste_lista_turnos)
 add_executable(teste_quicksort tests/teste_quicksort.c)
-target_link_libraries(teste_quicksort PRIVATE odisseu_core)
+target_link_libraries(teste_quicksort PRIVATE odisseu_regras)
 add_test(NAME quicksort COMMAND teste_quicksort)
 
 
 add_executable(teste_combate tests/teste_combate.c)
-target_link_libraries(teste_combate PRIVATE odisseu_core)
+target_link_libraries(teste_combate PRIVATE odisseu_regras)
 add_test(NAME combate COMMAND teste_combate)
 
 add_executable(teste_acoes_combate tests/teste_acoes_combate.c)
-target_link_libraries(teste_acoes_combate PRIVATE odisseu_core)
+target_link_libraries(teste_acoes_combate PRIVATE odisseu_regras)
 add_test(NAME acoes_combate COMMAND teste_acoes_combate)
 
 add_executable(teste_ia_inimigo tests/teste_ia_inimigo.c)
-target_link_libraries(teste_ia_inimigo PRIVATE odisseu_core)
+target_link_libraries(teste_ia_inimigo PRIVATE odisseu_apresentacao)
 add_test(NAME ia_inimigo COMMAND teste_ia_inimigo)
 
 add_executable(teste_cenarios_combate tests/teste_cenarios_combate.c)
-target_link_libraries(teste_cenarios_combate PRIVATE odisseu_core)
+target_link_libraries(teste_cenarios_combate PRIVATE odisseu_regras)
 add_test(NAME cenarios_combate COMMAND teste_cenarios_combate)
 
 add_executable(teste_painel_combate tests/teste_painel_combate.c)
-target_link_libraries(teste_painel_combate PRIVATE odisseu_core)
+target_link_libraries(teste_painel_combate PRIVATE odisseu_apresentacao)
 add_test(NAME painel_combate COMMAND teste_painel_combate)
 
 add_executable(teste_animacao_combate tests/teste_animacao_combate.c)
-target_link_libraries(teste_animacao_combate PRIVATE odisseu_core)
+target_link_libraries(teste_animacao_combate PRIVATE odisseu_apresentacao)
 add_test(NAME animacao_combate COMMAND teste_animacao_combate)
 
 add_executable(
@@ -167,7 +199,7 @@ target_link_libraries(teste_telas_jogo PRIVATE raylib)
 add_test(NAME telas_jogo COMMAND teste_telas_jogo)
 
 add_executable(teste_objetivo tests/teste_objetivo.c)
-target_link_libraries(teste_objetivo PRIVATE odisseu_core)
+target_link_libraries(teste_objetivo PRIVATE odisseu_regras)
 add_test(NAME objetivo COMMAND teste_objetivo)
 
 add_executable(
@@ -182,25 +214,21 @@ target_include_directories(
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-target_link_libraries(teste_configuracao_fases PRIVATE odisseu_core raylib)
+target_link_libraries(teste_configuracao_fases PRIVATE odisseu_regras raylib)
 add_test(NAME configuracao_fases COMMAND teste_configuracao_fases)
 
 add_executable(
     teste_jornada
     tests/teste_jornada.c
-    src/jogo/cenario.c
-    src/jogo/configuracao_fases.c
-    src/jogo/fase.c
-    src/jogo/jornada.c
 )
 target_include_directories(
     teste_jornada
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-target_link_libraries(teste_jornada PRIVATE odisseu_core raylib)
+target_link_libraries(teste_jornada PRIVATE odisseu_regras)
 add_test(NAME jornada COMMAND teste_jornada)
 
 add_executable(teste_narrativa tests/teste_narrativa.c)
-target_link_libraries(teste_narrativa PRIVATE odisseu_core)
+target_link_libraries(teste_narrativa PRIVATE odisseu_apresentacao)
 add_test(NAME narrativa COMMAND teste_narrativa)

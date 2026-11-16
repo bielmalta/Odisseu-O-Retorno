@@ -6,6 +6,7 @@
 #include "animacao_combate.h"
 #include "combate.h"
 #include "ia_inimigo.h"
+#include "ritmo_combate.h"
 #include "interpolacao.h"
 #include "personagem.h"
 

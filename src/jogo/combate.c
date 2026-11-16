@@ -3,7 +3,7 @@
 #include "ia_inimigo.h"
 #include "quicksort.h"
 
-#include <stdio.h>
+#include <stddef.h>
 
 void inicializarCombate(Combate *combate)
 {
@@ -75,36 +75,18 @@ bool prepararCombate(
     combate->participanteAtual = NULL;
     combate->estado = COMBATE_ROUND_START;
 
-    printf("[COMBATE] %d participantes preparados.\n",
-           combate->turnos.tamanho);
-
     return true;
 }
 
 static void iniciarRodada(Combate *combate)
 {
     if (!ordenarPorVelocidade(&combate->turnos)) {
-        fprintf(stderr, "[COMBATE] Falha ao ordenar os turnos.\n");
         return;
     }
 
     combate->rodada++;
     combate->turnosConcluidos = 0;
     combate->participanteAtual = personagemDaVez(&combate->turnos);
-
-    printf("\n[COMBATE] Rodada %u iniciada.\n", combate->rodada);
-    printf("[COMBATE] Ordem calculada pelo QuickSort:\n");
-
-    NoTurno *no = combate->turnos.inicio;
-
-    for (int i = 0; i < combate->turnos.tamanho; i++) {
-        printf("  %d. %s (iniciativa: %d)\n",
-               i + 1,
-               no->personagem->nome,
-               no->personagem->iniciativa);
-
-        no = no->proximo;
-    }
 
     if (combate->participanteAtual == combate->jogador) {
         combate->estado = COMBATE_WAITING_PLAYER;
@@ -163,7 +145,6 @@ bool verificarFimCombate(Combate *combate)
     if (!personagemVivo(combate->jogador)) {
         combate->participanteAtual = NULL;
         combate->estado = COMBATE_DEFEAT;
-        printf("[COMBATE] Odisseu foi derrotado.\n");
         return true;
     }
 
@@ -186,8 +167,6 @@ bool verificarFimCombate(Combate *combate)
                     combate->turnosConcluidos--;
                 }
 
-                printf("[COMBATE] %s foi removido da ordem de turnos.\n",
-                       personagem->nome);
                 removerPersonagem(&combate->turnos, personagem);
 
                 if (eraParticipanteAtual) {
@@ -208,7 +187,6 @@ bool verificarFimCombate(Combate *combate)
     if (inimigosRestantes == 0) {
         combate->participanteAtual = NULL;
         combate->estado = COMBATE_VICTORY;
-        printf("[COMBATE] Todos os inimigos foram derrotados.\n");
         return true;
     }
 
@@ -235,10 +213,6 @@ void concluirAcaoCombate(Combate *combate)
         return;
     }
 
-    printf("[RODADA %u] %s concluiu sua acao.\n",
-           combate->rodada,
-           combate->participanteAtual->nome);
-
     combate->turnosConcluidos++;
     combate->estado = COMBATE_RESOLVING;
 }
@@ -250,9 +224,6 @@ static void resolverTurno(Combate *combate)
     }
 
     if (combate->turnosConcluidos >= combate->turnos.tamanho) {
-        printf("[COMBATE] Rodada %u concluida.\n",
-               combate->rodada);
-
         combate->participanteAtual = NULL;
         combate->estado = COMBATE_ROUND_START;
         return;

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "cenario_render.h"
 #include "interpolacao.h"
 #include "rlgl.h"
 

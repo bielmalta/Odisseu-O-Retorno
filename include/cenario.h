@@ -37,6 +37,4 @@ int adicionarCaixaCenario(
 /* Remove a caixa (ex.: portao que se abre) sem alterar os outros indices. */
 void removerCaixaCenario(Cenario *cenario, int indice);
 
-void desenharCenario(const Cenario *cenario);
-
 #endif
