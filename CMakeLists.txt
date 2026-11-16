@@ -245,3 +245,43 @@ add_test(NAME jornada COMMAND teste_jornada)
 add_executable(teste_narrativa tests/teste_narrativa.c)
 target_link_libraries(teste_narrativa PRIVATE odisseu_apresentacao)
 add_test(NAME narrativa COMMAND teste_narrativa)
+
+# Regressao e requisitos academicos (commit 27): partida completa sem janela
+# e verificacao do codigo-fonte (sem C++, sem qsort, regras sem Raylib).
+file(
+    GLOB_RECURSE ODISSEU_FONTES_VERIFICADAS
+    CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+)
+string(REPLACE ";" "|" ODISSEU_LISTA_FONTES "${ODISSEU_FONTES_VERIFICADAS}")
+
+add_executable(
+    teste_regressao
+    tests/teste_regressao.c
+    src/jogo/cenario.c
+    src/jogo/configuracao_fases.c
+    src/jogo/fase.c
+    src/render/telas_jogo.c
+)
+target_include_directories(
+    teste_regressao
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_compile_definitions(
+    teste_regressao
+    PRIVATE
+        "ODISSEU_FONTES=\"${ODISSEU_LISTA_FONTES}\""
+)
+target_link_libraries(
+    teste_regressao
+    PRIVATE
+        odisseu_apresentacao
+        odisseu_regras
+        raylib
+)
+add_test(NAME regressao COMMAND teste_regressao)
