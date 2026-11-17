@@ -142,6 +142,97 @@ static void testarTurnoAutomatico(void)
     puts("ok: inimigo conclui o turno sozinho");
 }
 
+static void testarIdentidadesDosEncontros(void)
+{
+    /* Polifemo anuncia o golpe; defender transforma o impacto em dano minimo. */
+    {
+        Combate combate;
+        Personagem odisseu = criarPersonagem("Odisseu", TIPO_HEROI, 170, 20, 10, 12);
+        Personagem polifemo = criarPersonagem("Polifemo", TIPO_INIMIGO, 84, 19, 6, 8);
+        Personagem *inimigos[] = { &polifemo };
+
+        inicializarCombate(&combate);
+        assert(prepararCombate(&combate, &odisseu, inimigos, 1));
+        configurarIdentidadeCombate(&combate, IDENTIDADE_POLIFEMO, false);
+        combate.estado = COMBATE_ENEMY_TURN;
+        combate.participanteAtual = &polifemo;
+        combate.rodada = 2;
+        assert(prepararGolpePesadoNoCombate(&combate));
+        assert(combate.golpePesadoPreparado);
+        assert(intencaoEspecialInimigo(&combate) != NULL);
+
+        odisseu.bonusDefesa = BONUS_DEFESA_ACAO;
+        combate.estado = COMBATE_ENEMY_TURN;
+        combate.participanteAtual = &polifemo;
+        assert(golpePesadoNoCombate(&combate, &odisseu));
+        assert(odisseu.vida == 169);
+        assert(!combate.golpePesadoPreparado);
+        finalizarCombate(&combate);
+    }
+
+    /* O canto cria uma penalidade para a proxima ordenacao da lista. */
+    {
+        Combate combate;
+        Personagem odisseu = criarPersonagem("Odisseu", TIPO_HEROI, 170, 20, 10, 12);
+        Personagem sereia = criarPersonagem("Sereia de Ligeia", TIPO_INIMIGO, 36, 16, 4, 15);
+        Personagem *inimigos[] = { &sereia };
+
+        inicializarCombate(&combate);
+        assert(prepararCombate(&combate, &odisseu, inimigos, 1));
+        configurarIdentidadeCombate(&combate, IDENTIDADE_SEREIAS, false);
+        combate.estado = COMBATE_ENEMY_TURN;
+        combate.participanteAtual = &sereia;
+        combate.rodada = 2;
+        assert(enfeiticarNoCombate(&combate, &odisseu));
+        assert(combate.penalidadeIniciativaPendente == -PENALIDADE_ENCANTO_SEREIA);
+        assert(combate.rodadaUltimoEncanto == 2);
+        finalizarCombate(&combate);
+    }
+
+    /* Em Cila, remover um tentaculo acelera e fortalece os restantes. */
+    {
+        Combate combate;
+        Personagem odisseu = criarPersonagem("Odisseu", TIPO_HEROI, 170, 50, 10, 30);
+        Personagem t1 = criarPersonagem("Tentaculo I", TIPO_INIMIGO, 20, 10, 2, 10);
+        Personagem t2 = criarPersonagem("Tentaculo II", TIPO_INIMIGO, 30, 11, 3, 9);
+        Personagem *inimigos[] = { &t1, &t2 };
+
+        inicializarCombate(&combate);
+        assert(prepararCombate(&combate, &odisseu, inimigos, 2));
+        configurarIdentidadeCombate(&combate, IDENTIDADE_CILA, false);
+        atualizarCombate(&combate);
+        assert(combate.estado == COMBATE_WAITING_PLAYER);
+        assert(atacarNoCombate(&combate, &t1));
+        assert(!personagemVivo(&t1));
+        assert(t2.ataque == 11);
+        assert(t2.iniciativa == 11);
+        assert(combate.inimigosDerrotados == 1);
+        finalizarCombate(&combate);
+    }
+
+    /* Em Itaca, um pretendente pode gastar a vez protegendo o aliado. */
+    {
+        Combate combate;
+        Personagem odisseu = criarPersonagem("Odisseu", TIPO_HEROI, 170, 20, 10, 12);
+        Personagem antinoo = criarPersonagem("Antinoo", TIPO_INIMIGO, 45, 15, 5, 13);
+        Personagem eurimaco = criarPersonagem("Eurimaco", TIPO_INIMIGO, 52, 16, 5, 14);
+        Personagem *inimigos[] = { &antinoo, &eurimaco };
+
+        antinoo.vida = 20;
+        inicializarCombate(&combate);
+        assert(prepararCombate(&combate, &odisseu, inimigos, 2));
+        configurarIdentidadeCombate(&combate, IDENTIDADE_ITACA, false);
+        combate.estado = COMBATE_ENEMY_TURN;
+        combate.participanteAtual = &eurimaco;
+        assert(executarTurnoInimigo(&combate));
+        assert(antinoo.bonusDefesa == BONUS_PROTECAO_ALIADO);
+        assert(combate.estado == COMBATE_RESOLVING);
+        finalizarCombate(&combate);
+    }
+
+    puts("ok: identidades de Polifemo, Sereias, Cila e Itaca");
+}
+
 /* Simula um combate inteiro. O jogador segue uma estrategia fixa e a IA
  * cuida dos inimigos. Devolve o estado final. */
 static EstadoCombate simularCombate(Personagem *odisseu,
@@ -361,6 +452,7 @@ int main(void)
     testarSelecaoDeAlvo();
     testarEscolhaDaAcao();
     testarTurnoAutomatico();
+    testarIdentidadesDosEncontros();
     testarCombatesCompletos();
     testarSemDefesaInfinita();
     testarReprodutibilidade();

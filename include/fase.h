@@ -12,6 +12,10 @@
 #define FASE_MAX_INIMIGOS 4
 #define FASE_TAMANHO_MENSAGEM 96
 
+#define SEREIAS_ENCANTO_MAXIMO 100.0f
+#define CILA_INTERVALO_ATAQUE 14.0f
+#define ITACA_SUSPEITA_MAXIMA 100.0f
+
 /* Maquina de estados da fase:
  * Exploracao -> Confronto -> Saida liberada -> Concluida.
  * (O objetivo cumprido dispara o confronto na mesma atualizacao.) */
@@ -26,6 +30,12 @@ typedef struct ItemFase {
     Vector3 posicao; /* centro do item */
     bool concluido; /* ja foi coletado ou ativado */
 } ItemFase;
+
+typedef enum RotaItaca {
+    ROTA_ITACA_NENHUMA,
+    ROTA_ITACA_FURTIVA,
+    ROTA_ITACA_DIRETA
+} RotaItaca;
 
 typedef struct Fase {
     const ConfiguracaoFase *configuracao;
@@ -52,6 +62,17 @@ typedef struct Fase {
 
     char mensagem[FASE_TAMANHO_MENSAGEM];
     float tempoMensagem;
+
+    /* Estado das mecanicas exclusivas de exploracao. */
+    float tempoMecanica;
+    float medidorPerigo;
+    float tempoEvento;
+    float tempoImpactoVisual;
+    int indiceEvento;
+    Vector3 posicaoAmeaca;
+    Vector3 patrulhasItaca[2];
+    RotaItaca rotaItaca;
+    bool detectadoEmItaca;
 } Fase;
 
 /* Monta uma fase a partir de uma entrada da tabela de configuracoes. */

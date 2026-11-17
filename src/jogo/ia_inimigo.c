@@ -1,6 +1,7 @@
 #include "ia_inimigo.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include "acoes_combate.h"
 
@@ -59,10 +60,68 @@ AcaoInimigo escolherAcaoInimigo(const Personagem *inimigo,
     return ACAO_INIMIGO_ATACAR;
 }
 
+static Personagem *aliadoFerido(const Combate *combate, const Personagem *protetor)
+{
+    const NoTurno *no = combate->turnos.inicio;
+    Personagem *escolhido = NULL;
+
+    for (int i = 0; i < combate->turnos.tamanho; i++) {
+        Personagem *candidato = no->personagem;
+
+        if (candidato != protetor && candidato->tipo == protetor->tipo &&
+            personagemVivo(candidato) && candidato->bonusDefesa == 0 &&
+            candidato->vida * 100 <= candidato->vidaMaxima * 60 &&
+            (escolhido == NULL ||
+             candidato->vida * escolhido->vidaMaxima <
+             escolhido->vida * candidato->vidaMaxima)) {
+            escolhido = candidato;
+        }
+        no = no->proximo;
+    }
+
+    return escolhido;
+}
+
+static AcaoInimigo escolherAcaoEspecial(
+    Combate *combate,
+    Personagem *inimigo,
+    Personagem **alvoEspecial
+)
+{
+    *alvoEspecial = NULL;
+
+    if (combate->identidade == IDENTIDADE_POLIFEMO) {
+        if (combate->golpePesadoPreparado) {
+            return ACAO_INIMIGO_GOLPE_PESADO;
+        }
+        if (combate->rodada >= 2 && combate->rodada % 3 == 2) {
+            return ACAO_INIMIGO_PREPARAR_PESADO;
+        }
+    }
+
+    if (combate->identidade == IDENTIDADE_SEREIAS &&
+        combate->rodada >= 2 && combate->rodada % 2 == 0 &&
+        combate->rodadaUltimoEncanto != combate->rodada &&
+        strstr(inimigo->nome, "Ligeia") != NULL) {
+        return ACAO_INIMIGO_ENFEITICAR;
+    }
+
+    if (combate->identidade == IDENTIDADE_ITACA) {
+        *alvoEspecial = aliadoFerido(combate, inimigo);
+        if (*alvoEspecial != NULL) {
+            return ACAO_INIMIGO_PROTEGER_ALIADO;
+        }
+    }
+
+    return ACAO_INIMIGO_ATACAR;
+}
+
 bool executarTurnoInimigo(Combate *combate)
 {
     Personagem *inimigo;
     Personagem *alvo;
+    Personagem *alvoEspecial;
+    AcaoInimigo acao;
     bool agiu = false;
 
     if (combate == NULL || combate->estado != COMBATE_ENEMY_TURN ||
@@ -75,7 +134,17 @@ bool executarTurnoInimigo(Combate *combate)
     alvo = selecionarAlvoInimigo(combate, inimigo);
 
     if (alvo != NULL) {
-        if (escolherAcaoInimigo(inimigo, alvo) == ACAO_INIMIGO_DEFENDER) {
+        acao = escolherAcaoEspecial(combate, inimigo, &alvoEspecial);
+
+        if (acao == ACAO_INIMIGO_PREPARAR_PESADO) {
+            agiu = prepararGolpePesadoNoCombate(combate);
+        } else if (acao == ACAO_INIMIGO_GOLPE_PESADO) {
+            agiu = golpePesadoNoCombate(combate, alvo);
+        } else if (acao == ACAO_INIMIGO_ENFEITICAR) {
+            agiu = enfeiticarNoCombate(combate, alvo);
+        } else if (acao == ACAO_INIMIGO_PROTEGER_ALIADO) {
+            agiu = protegerAliadoNoCombate(combate, alvoEspecial);
+        } else if (escolherAcaoInimigo(inimigo, alvo) == ACAO_INIMIGO_DEFENDER) {
             agiu = defenderNoCombate(combate);
         } else {
             agiu = atacarNoCombate(combate, alvo);
@@ -87,4 +156,23 @@ bool executarTurnoInimigo(Combate *combate)
     }
 
     return true;
+}
+
+const char *intencaoEspecialInimigo(const Combate *combate)
+{
+    if (combate == NULL) {
+        return NULL;
+    }
+
+    if (combate->identidade == IDENTIDADE_POLIFEMO &&
+        combate->golpePesadoPreparado) {
+        return "ALERTA: golpe pesado de Polifemo! Use Defender agora.";
+    }
+
+    if (combate->identidade == IDENTIDADE_SEREIAS &&
+        combate->penalidadeIniciativaPendente < 0) {
+        return "O canto reduzira sua iniciativa na proxima rodada.";
+    }
+
+    return NULL;
 }

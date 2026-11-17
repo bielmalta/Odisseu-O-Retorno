@@ -320,9 +320,10 @@ static const ConfiguracaoOrnamento ORN_ITACA[] = {
  *   meio contra Sereias e Cila e por ultimo contra os pretendentes. */
 static const ConfiguracaoFase FASES[] = {
     {
+        .identidade = IDENTIDADE_POLIFEMO,
         .id = "caverna_polifemo",
         .titulo = "Fase 1 - A Caverna de Polifemo",
-        .instrucaoInicial = "Explore a caverna e cumpra o objetivo",
+        .instrucaoInicial = "Colete madeira sem chamar a atencao de Polifemo",
         .textoNarrativo =
             "Depois da Guerra de Troia, Odisseu enfrenta um longo caminho\n"
             "de volta a Itaca. Uma tempestade o leva a uma ilha desconhecida,\n"
@@ -368,9 +369,10 @@ static const ConfiguracaoFase FASES[] = {
             "Objetivo: ache a saida da caverna, ao norte"
     },
     {
+        .identidade = IDENTIDADE_SEREIAS,
         .id = "canto_sereias",
         .titulo = "Fase 2 - O Canto das Sereias",
-        .instrucaoInicial = "Proteja os pontos do conves contra o canto",
+        .instrucaoInicial = "Proteja o conves antes do encantamento chegar ao limite",
         .textoNarrativo =
             "Livre da caverna, Odisseu retorna ao mar. O vento conduz o navio\n"
             "ate as Sereias, cujo canto enfeitica todos que se aproximam.\n"
@@ -415,9 +417,10 @@ static const ConfiguracaoFase FASES[] = {
         .textoObjetivoSaida = "Objetivo: alcance o leme ao norte"
     },
     {
+        .identidade = IDENTIDADE_CILA,
         .id = "estreito_cila",
         .titulo = "Fase 3 - O Estreito de Cila",
-        .instrucaoInicial = "Reative os mecanismos antes do ataque",
+        .instrucaoInicial = "Reative os mecanismos entre os ataques de Cila",
         .textoNarrativo =
             "O canto ficou para tras, mas o navio entra em um estreito rochoso.\n"
             "Nas sombras, Cila aguarda com seus tentaculos. Os mecanismos\n"
@@ -463,9 +466,10 @@ static const ConfiguracaoFase FASES[] = {
         .textoObjetivoSaida = "Objetivo: alcance a proa ao norte"
     },
     {
+        .identidade = IDENTIDADE_ITACA,
         .id = "retorno_itaca",
         .titulo = "Fase 4 - O Retorno a Itaca",
-        .instrucaoInicial = "Recupere o arco no salao do palacio",
+        .instrucaoInicial = "Escolha uma rota pelo palacio e recupere o arco",
         .textoNarrativo =
             "Depois de anos no mar, Odisseu finalmente pisa em Itaca.\n"
             "Seu palacio foi tomado por pretendentes. Para recuperar o lar,\n"

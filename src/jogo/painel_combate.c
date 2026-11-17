@@ -164,8 +164,34 @@ void observarEventoPainel(const EventoCombate *evento, void *contexto)
         return;
     }
 
+    if (evento->tipo == EVENTO_COMBATE_PREPARO_PESADO) {
+        snprintf(texto, sizeof texto, "%s prepara um golpe pesado!",
+                 evento->origem->nome);
+        registrarMensagemPainel(painel, texto);
+        return;
+    }
+
+    if (evento->tipo == EVENTO_COMBATE_ENCANTO) {
+        snprintf(texto, sizeof texto, "%s entoa um canto encantador!",
+                 evento->origem->nome);
+        registrarMensagemPainel(painel, texto);
+        return;
+    }
+
+    if (evento->tipo == EVENTO_COMBATE_PROTECAO) {
+        snprintf(texto, sizeof texto, "%s protegeu %s",
+                 evento->origem->nome, evento->alvo->nome);
+        registrarMensagemPainel(painel, texto);
+        return;
+    }
+
     if (evento->alvoDefendia) {
-        snprintf(texto, sizeof texto, "%s atacou %s: %d de dano (defendido)",
+        snprintf(texto, sizeof texto, "%.22s%s atacou %.22s: %d de dano (defendido)",
+                 evento->origem->nome,
+                 evento->tipo == EVENTO_COMBATE_ATAQUE_PESADO ? " [PESADO]" : "",
+                 evento->alvo->nome, evento->dano);
+    } else if (evento->tipo == EVENTO_COMBATE_ATAQUE_PESADO) {
+        snprintf(texto, sizeof texto, "%s usou GOLPE PESADO em %s: %d de dano",
                  evento->origem->nome, evento->alvo->nome, evento->dano);
     } else {
         snprintf(texto, sizeof texto, "%s atacou %s: %d de dano",

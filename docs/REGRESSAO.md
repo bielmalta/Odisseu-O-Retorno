@@ -7,7 +7,7 @@ Commit 27 do `PLANO_DE_COMMITS.md`. Este documento reúne:
 3. o roteiro manual de uma partida completa;
 4. os bugs conhecidos e as limitações aceitas.
 
-Data da última execução: 16/11/2026, sobre a `main` com os commits 01 a 26.
+Data da última execução: 17/11/2026, com as mecânicas exclusivas das quatro fases.
 
 ## 1. Como executar
 
@@ -31,9 +31,9 @@ Saída esperada:
 ok R1: lista circular com 9 operacoes reais
 ok R2: QuickSort ordena por iniciativa e muda a ordem real
 ok R3: realizarAtaque, verificarFimCombate e funcoes de objetivo
-ok R4: 25 arquivos .c, regras sem Raylib e sem qsort()
+ok R4: 26 arquivos .c, regras sem Raylib e sem qsort()
 ok R6: quatro fases com objetivos e encontros distintos
-ok R5: partida completa do menu ao retorno a Itaca (4 fases, vida final 13/170)
+ok R5: partida completa do menu ao retorno a Itaca (4 fases, vida final 17/170)
 ```
 
 ### Testes existentes
@@ -141,7 +141,7 @@ Nenhum bug que impeça concluir a jornada foi encontrado nesta regressão. O bug
 |---|---|---|---|
 | B1 | Bug (corrigido) | Fase 1 impossível: Polifemo (120 de vida, 25 de ataque) derrotava Odisseu (100 de vida) em todas as estratégias | corrigido no commit 26; `teste_balanceamento` impede regressão |
 | L1 | Limitação | Não há modo de depuração dentro do jogo para avançar/retroceder turno manualmente (item da seção 8 do plano); `retrocederTurno()` é demonstrado pelos testes | aceita; demonstrar pelos testes ou criar uma tecla de depuração |
-| L2 | Limitação de regra | A defesa vale +5 apenas contra o próximo golpe. Numa luta de desgaste, defender nunca melhora o resultado: só adia o fim e dá ao inimigo uma rodada a mais. A escolha faz diferença (só defender sempre perde; defender na hora errada pode custar a luta), mas atacar é sempre a melhor jogada | aceita; mudar exigiria alterar a regra do commit 13 |
+| B2 | Melhoria aplicada | A defesa comum vale +5 contra o próximo golpe; contra o golpe pesado anunciado de Polifemo, ela recebe +20 adicionais e reduz o dano de 26 para 1 | coberto por `teste_ia_inimigo` |
 | L3 | Limitação visual | `assets/models` está vazio: inimigos, mãos e cenário usam primitivas da Raylib | aceita pelo escopo do protótipo |
 | L4 | Ambiente | Sem placa de som, a Raylib avisa e o jogo segue em silêncio | comportamento esperado |
 | L5 | Cobertura | Câmera, HUD, colisão com paredes e desenho 3D não têm teste automático (dependem de janela); são cobertos pelo roteiro manual | aceita |

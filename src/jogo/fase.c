@@ -1,11 +1,27 @@
 #include "fase.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 static const float DISTANCIA_INTERACAO = 3.0f;
 static const float FOLGA_MIRA = 0.12f;
 static const float TEMPO_MENSAGEM = 3.5f;
+
+static float limitar(float valor, float minimo, float maximo)
+{
+    if (valor < minimo) {
+        return minimo;
+    }
+    return valor > maximo ? maximo : valor;
+}
+
+static float distanciaHorizontal(Vector3 a, Vector3 b)
+{
+    const float dx = a.x - b.x;
+    const float dz = a.z - b.z;
+    return sqrtf(dx * dx + dz * dz);
+}
 
 static void definirMensagem(Fase *fase, const char *texto)
 {
@@ -80,6 +96,11 @@ bool criarFase(Fase *fase, const ConfiguracaoFase *configuracao)
     fase->saida = configuracao->saida;
     fase->indicePortao = -1;
     fase->itemAlvo = -1;
+    fase->posicaoAmeaca = configuracao->encontro.inimigos[0].posicao;
+    fase->tempoEvento = configuracao->identidade == IDENTIDADE_CILA
+                            ? CILA_INTERVALO_ATAQUE : 0.0f;
+    fase->indiceEvento = -1;
+    fase->rotaItaca = ROTA_ITACA_NENHUMA;
 
     limparCenario(&fase->cenario);
     configurarChaoCenario(
@@ -219,9 +240,186 @@ bool interagir(Fase *fase)
     }
 
     fase->itens[fase->itemAlvo].concluido = true;
+
+    if (fase->configuracao->identidade == IDENTIDADE_SEREIAS) {
+        /* A cera abafa temporariamente o canto e recompensa quem encontra os
+         * pontos depressa. */
+        fase->medidorPerigo = limitar(
+            fase->medidorPerigo - 28.0f, 0.0f, SEREIAS_ENCANTO_MAXIMO
+        );
+    }
     fase->itemAlvo = -1;
     registrarInteracao(fase);
     return true;
+}
+
+static bool desfazerUltimaInteracao(Fase *fase)
+{
+    for (int i = fase->quantidadeItens - 1; i >= 0; i--) {
+        if (fase->itens[i].concluido) {
+            fase->itens[i].concluido = false;
+            if (fase->objetivo.progresso > 0) {
+                fase->objetivo.progresso--;
+            }
+            fase->objetivo.cumprido = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+static void atualizarPolifemoRondando(
+    Fase *fase,
+    Vector3 posicaoJogador,
+    float deltaTempo
+)
+{
+    const float angulo = fase->tempoMecanica * 0.38f;
+    const float distancia = distanciaHorizontal(
+        fase->posicaoAmeaca, posicaoJogador
+    );
+
+    fase->posicaoAmeaca = (Vector3){
+        sinf(angulo) * 12.0f,
+        0.0f,
+        -2.0f + cosf(angulo) * 10.0f
+    };
+
+    if (distancia < 6.0f) {
+        fase->medidorPerigo += deltaTempo * (7.0f - distancia) * 7.0f;
+    } else {
+        fase->medidorPerigo -= deltaTempo * 18.0f;
+    }
+    fase->medidorPerigo = limitar(fase->medidorPerigo, 0.0f, 100.0f);
+
+    if (fase->medidorPerigo >= 100.0f) {
+        definirMensagem(fase, "Polifemo ouviu voce! Afaste-se da patrulha.");
+        fase->medidorPerigo = 65.0f;
+    }
+}
+
+static void atualizarEncantamentoSereias(Fase *fase, float deltaTempo)
+{
+    fase->medidorPerigo = limitar(
+        fase->medidorPerigo + deltaTempo * 5.5f,
+        0.0f,
+        SEREIAS_ENCANTO_MAXIMO
+    );
+
+    if (fase->medidorPerigo >= SEREIAS_ENCANTO_MAXIMO) {
+        const bool rompeuProtecao = desfazerUltimaInteracao(fase);
+
+        fase->medidorPerigo = 52.0f;
+        definirMensagem(
+            fase,
+            rompeuProtecao
+                ? "O canto rompeu uma protecao! Reaplique a cera."
+                : "Odisseu resistiu ao canto, mas precisa agir depressa!"
+        );
+    }
+}
+
+static void atualizarAtaquesDeCila(Fase *fase, float deltaTempo)
+{
+    fase->tempoEvento -= deltaTempo;
+    if (fase->tempoImpactoVisual > 0.0f) {
+        fase->tempoImpactoVisual -= deltaTempo;
+    }
+
+    if (fase->tempoEvento > 0.0f) {
+        return;
+    }
+
+    fase->indiceEvento = (fase->indiceEvento + 1) % fase->quantidadeItens;
+    fase->tempoEvento = CILA_INTERVALO_ATAQUE;
+    fase->tempoImpactoVisual = 1.4f;
+
+    definirMensagem(
+        fase,
+        desfazerUltimaInteracao(fase)
+            ? "Cila atingiu o navio e desligou um mecanismo!"
+            : "Um tentaculo atingiu o conves! Ative os mecanismos."
+    );
+}
+
+static void atualizarFurtividadeItaca(
+    Fase *fase,
+    Vector3 posicaoJogador,
+    float deltaTempo
+)
+{
+    const float oscilacao = sinf(fase->tempoMecanica * 0.75f);
+    float proximidade = 99.0f;
+
+    fase->patrulhasItaca[0] = (Vector3){ -4.5f + oscilacao * 3.0f, 0.0f, 2.0f };
+    fase->patrulhasItaca[1] = (Vector3){ 4.5f - oscilacao * 3.0f, 0.0f, -6.0f };
+
+    if (fase->rotaItaca == ROTA_ITACA_NENHUMA && posicaoJogador.z < 8.0f) {
+        if (posicaoJogador.x <= -2.0f) {
+            fase->rotaItaca = ROTA_ITACA_FURTIVA;
+            definirMensagem(fase, "Rota furtiva: evite as patrulhas.");
+        } else if (posicaoJogador.x >= 2.0f || posicaoJogador.z < 5.0f) {
+            fase->rotaItaca = ROTA_ITACA_DIRETA;
+            fase->detectadoEmItaca = true;
+            fase->medidorPerigo = ITACA_SUSPEITA_MAXIMA;
+            definirMensagem(fase, "Rota direta: os pretendentes foram alertados!");
+        }
+    }
+
+    if (fase->rotaItaca != ROTA_ITACA_FURTIVA || fase->detectadoEmItaca) {
+        return;
+    }
+
+    for (int i = 0; i < 2; i++) {
+        const float d = distanciaHorizontal(posicaoJogador, fase->patrulhasItaca[i]);
+        if (d < proximidade) {
+            proximidade = d;
+        }
+    }
+
+    if (proximidade < 5.0f) {
+        fase->medidorPerigo += deltaTempo * (6.0f - proximidade) * 12.0f;
+    } else {
+        fase->medidorPerigo -= deltaTempo * 15.0f;
+    }
+    fase->medidorPerigo = limitar(
+        fase->medidorPerigo, 0.0f, ITACA_SUSPEITA_MAXIMA
+    );
+
+    if (fase->medidorPerigo >= ITACA_SUSPEITA_MAXIMA) {
+        fase->detectadoEmItaca = true;
+        definirMensagem(fase, "Voce foi percebido! O ataque surpresa foi perdido.");
+    }
+}
+
+static void atualizarMecanicaExploracao(
+    Fase *fase,
+    Vector3 posicaoJogador,
+    float deltaTempo
+)
+{
+    if (fase->etapa != ETAPA_EXPLORACAO || deltaTempo <= 0.0f) {
+        return;
+    }
+
+    fase->tempoMecanica += deltaTempo;
+
+    switch (fase->configuracao->identidade) {
+    case IDENTIDADE_POLIFEMO:
+        atualizarPolifemoRondando(fase, posicaoJogador, deltaTempo);
+        break;
+    case IDENTIDADE_SEREIAS:
+        atualizarEncantamentoSereias(fase, deltaTempo);
+        break;
+    case IDENTIDADE_CILA:
+        atualizarAtaquesDeCila(fase, deltaTempo);
+        break;
+    case IDENTIDADE_ITACA:
+        atualizarFurtividadeItaca(fase, posicaoJogador, deltaTempo);
+        break;
+    case IDENTIDADE_NENHUMA:
+        break;
+    }
 }
 
 void encerrarConfronto(Fase *fase)
@@ -247,6 +445,8 @@ void atualizarFase(Fase *fase, Vector3 posicaoJogador, float deltaTempo)
     if (fase->tempoMensagem > 0.0f) {
         fase->tempoMensagem -= deltaTempo;
     }
+
+    atualizarMecanicaExploracao(fase, posicaoJogador, deltaTempo);
 
     if (fase->etapa != ETAPA_SAIDA_LIBERADA) {
         return;

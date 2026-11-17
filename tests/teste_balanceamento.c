@@ -77,6 +77,7 @@ static ResultadoLuta lutar(Personagem *odisseu,
 
     inicializarCombate(&combate);
     assert(prepararCombate(&combate, odisseu, ponteiros, quantidade));
+    configurarIdentidadeCombate(&combate, fase->identidade, false);
 
     while (combate.estado != COMBATE_VICTORY &&
            combate.estado != COMBATE_DEFEAT) {
@@ -238,6 +239,7 @@ static void testarVelocidadePerceptivel(void)
 
 int main(void)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
     testarHeroiConsistente();
     testarCadaEncontroComVidaCheia();
     testarJornadaCompleta();

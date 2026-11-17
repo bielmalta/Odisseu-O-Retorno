@@ -17,6 +17,12 @@ void inicializarCombate(Combate *combate)
     combate->turnosConcluidos = 0;
     combate->jogador = NULL;
     combate->participanteAtual = NULL;
+    combate->identidade = IDENTIDADE_NENHUMA;
+    combate->golpePesadoPreparado = false;
+    combate->rodadaUltimoEncanto = 0;
+    combate->penalidadeIniciativaPendente = 0;
+    combate->inimigosDerrotados = 0;
+    combate->vantagemFurtiva = false;
 }
 
 bool prepararCombate(
@@ -78,8 +84,37 @@ bool prepararCombate(
     return true;
 }
 
+void configurarIdentidadeCombate(
+    Combate *combate,
+    IdentidadeFase identidade,
+    bool vantagemFurtiva
+)
+{
+    if (combate == NULL || combate->estado == COMBATE_SETUP) {
+        return;
+    }
+
+    combate->identidade = identidade;
+    combate->vantagemFurtiva = vantagemFurtiva;
+    combate->golpePesadoPreparado = false;
+    combate->rodadaUltimoEncanto = 0;
+    combate->penalidadeIniciativaPendente = 0;
+    combate->inimigosDerrotados = 0;
+
+    if (vantagemFurtiva && combate->jogador != NULL) {
+        combate->jogador->bonusIniciativa += 5;
+    }
+}
+
 static void iniciarRodada(Combate *combate)
 {
+    if (combate->jogador != NULL &&
+        combate->penalidadeIniciativaPendente != 0) {
+        combate->jogador->bonusIniciativa +=
+            combate->penalidadeIniciativaPendente;
+        combate->penalidadeIniciativaPendente = 0;
+    }
+
     if (!ordenarPorVelocidade(&combate->turnos)) {
         return;
     }
@@ -92,6 +127,20 @@ static void iniciarRodada(Combate *combate)
         combate->estado = COMBATE_WAITING_PLAYER;
     } else {
         combate->estado = COMBATE_ENEMY_TURN;
+    }
+}
+
+static void enfurecerTentaculosRestantes(Combate *combate)
+{
+    NoTurno *no = combate->turnos.inicio;
+
+    for (int i = 0; i < combate->turnos.tamanho; i++) {
+        Personagem *personagem = no->personagem;
+
+        if (personagem->tipo == TIPO_INIMIGO && personagemVivo(personagem)) {
+            personagem->iniciativa += 2;
+        }
+        no = no->proximo;
     }
 }
 
@@ -168,6 +217,13 @@ bool verificarFimCombate(Combate *combate)
                 }
 
                 removerPersonagem(&combate->turnos, personagem);
+                combate->inimigosDerrotados++;
+
+                if (combate->identidade == IDENTIDADE_CILA) {
+                    /* Cada cabeca perdida acelera as restantes e muda a ordem
+                     * real calculada pelo QuickSort. */
+                    enfurecerTentaculosRestantes(combate);
+                }
 
                 if (eraParticipanteAtual) {
                     combate->participanteAtual =

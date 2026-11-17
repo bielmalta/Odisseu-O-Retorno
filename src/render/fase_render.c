@@ -266,12 +266,65 @@ static void desenharInimigos(const Fase *fase, const PoseInimigo *poses)
 {
     const PoseInimigo repouso = {0};
 
+    if (fase->etapa == ETAPA_EXPLORACAO &&
+        fase->configuracao->identidade == IDENTIDADE_POLIFEMO) {
+        Fase copia = *fase;
+        copia.pontosInimigos[0] = fase->posicaoAmeaca;
+        desenharInimigo(&copia, 0, &repouso);
+        return;
+    }
+
+    if (fase->etapa == ETAPA_EXPLORACAO &&
+        fase->configuracao->identidade == IDENTIDADE_ITACA) {
+        Fase copia = *fase;
+        for (int i = 0; i < 2 && i < fase->quantidadeInimigos; i++) {
+            copia.pontosInimigos[i] = fase->patrulhasItaca[i];
+            desenharInimigo(&copia, i, &repouso);
+        }
+        return;
+    }
+
     if (fase->etapa != ETAPA_CONFRONTO) {
         return;
     }
 
     for (int i = 0; i < fase->quantidadeInimigos; i++) {
         desenharInimigo(fase, i, poses != NULL ? &poses[i] : &repouso);
+    }
+}
+
+static void desenharMecanicaExploracao3D(const Fase *fase)
+{
+    if (fase->etapa != ETAPA_EXPLORACAO) {
+        return;
+    }
+
+    if (fase->configuracao->identidade == IDENTIDADE_CILA &&
+        fase->tempoImpactoVisual > 0.0f && fase->indiceEvento >= 0 &&
+        fase->indiceEvento < fase->quantidadeItens) {
+        const Vector3 p = fase->itens[fase->indiceEvento].posicao;
+        const float pulso = 0.65f + sinf((float)GetTime() * 16.0f) * 0.25f;
+
+        DrawCylinder(
+            (Vector3){ p.x, 0.03f, p.z }, 2.2f * pulso, 2.2f * pulso,
+            0.06f, 24, (Color){ 220, 45, 35, 150 }
+        );
+        DrawCylinder(
+            (Vector3){ p.x, 0.0f, p.z }, 0.22f, 0.08f, 6.0f,
+            12, (Color){ 90, 125, 95, 220 }
+        );
+    }
+
+    if (fase->configuracao->identidade == IDENTIDADE_ITACA &&
+        fase->rotaItaca == ROTA_ITACA_NENHUMA) {
+        DrawCubeV(
+            (Vector3){ -5.0f, 0.04f, 7.0f },
+            (Vector3){ 5.0f, 0.08f, 2.0f }, (Color){ 55, 135, 85, 180 }
+        );
+        DrawCubeV(
+            (Vector3){ 5.0f, 0.04f, 7.0f },
+            (Vector3){ 5.0f, 0.08f, 2.0f }, (Color){ 170, 75, 55, 180 }
+        );
     }
 }
 
@@ -298,8 +351,76 @@ void desenharFase(const Fase *fase, const PoseInimigo *poses)
         desenharForma(o->forma, o->posicao, o->tamanho, o->cor);
     }
     desenharMarcaDeSaida(fase);
+    desenharMecanicaExploracao3D(fase);
     desenharInimigos(fase, poses);
     desenharItens(fase); /* por ultimo: o brilho dos itens e translucido */
+}
+
+static void desenharBarraMecanica(
+    const char *rotulo,
+    float valor,
+    float maximo,
+    Color cor,
+    int largura
+)
+{
+    const Rectangle fundo = { 12.0f, 92.0f, 300.0f, 24.0f };
+    const float fracao = maximo > 0.0f ? limitar01(valor / maximo) : 0.0f;
+
+    DrawRectangleRec(fundo, (Color){ 10, 12, 18, 210 });
+    DrawRectangle(
+        (int)fundo.x + 2, (int)fundo.y + 2,
+        (int)((fundo.width - 4.0f) * fracao), (int)fundo.height - 4, cor
+    );
+    DrawRectangleLinesEx(fundo, 2.0f, WHITE);
+    desenharTexto(rotulo, 18, 95, 16, WHITE);
+    (void)largura;
+}
+
+static void desenharHudMecanica(const Fase *fase, int largura)
+{
+    if (fase->etapa != ETAPA_EXPLORACAO) {
+        return;
+    }
+
+    switch (fase->configuracao->identidade) {
+    case IDENTIDADE_POLIFEMO:
+        desenharBarraMecanica(
+            "BARULHO: afaste-se de Polifemo",
+            fase->medidorPerigo, 100.0f, ORANGE, largura
+        );
+        break;
+    case IDENTIDADE_SEREIAS:
+        desenharBarraMecanica(
+            "ENCANTAMENTO",
+            fase->medidorPerigo, SEREIAS_ENCANTO_MAXIMO,
+            (Color){ 180, 75, 210, 255 }, largura
+        );
+        break;
+    case IDENTIDADE_CILA:
+        desenharBarraMecanica(
+            TextFormat("PROXIMO ATAQUE: %.1fs", fase->tempoEvento),
+            fase->tempoEvento, CILA_INTERVALO_ATAQUE,
+            (Color){ 65, 170, 115, 255 }, largura
+        );
+        break;
+    case IDENTIDADE_ITACA:
+        if (fase->rotaItaca == ROTA_ITACA_NENHUMA) {
+            desenharTexto(
+                "Escolha: ESQUERDA furtiva | DIREITA direta",
+                12, 94, 18, GOLD
+            );
+        } else {
+            desenharBarraMecanica(
+                fase->detectadoEmItaca ? "ALERTA: DESCOBERTO" : "SUSPEITA",
+                fase->medidorPerigo, ITACA_SUSPEITA_MAXIMA,
+                fase->detectadoEmItaca ? RED : YELLOW, largura
+            );
+        }
+        break;
+    case IDENTIDADE_NENHUMA:
+        break;
+    }
 }
 
 static const char *textoObjetivoAtual(const Fase *fase, char *buffer, int tamanho)
@@ -340,6 +461,7 @@ void desenharHudFase(const Fase *fase)
     desenharTexto(
         textoObjetivoAtual(fase, buffer, (int)sizeof buffer), 12, 62, 20, GOLD
     );
+    desenharHudMecanica(fase, largura);
 
     /* Aviso de interacao: so com objeto valido no centro da mira */
     if (fase->itemAlvo >= 0) {

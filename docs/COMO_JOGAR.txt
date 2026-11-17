@@ -23,6 +23,19 @@ defender e girar a lanca (Giro: acerta todos os inimigos, custa 60 de Furia).
 Atacar, defender e apanhar enchem a barra de Furia. Defender tambem faz
 Odisseu agir mais cedo na rodada seguinte.
 
+MECANICAS DAS FASES
+Polifemo .......... Evite se aproximar enquanto coleta a madeira. Quando ele
+                    anunciar o golpe pesado, use Defender antes do ataque.
+Sereias ........... A barra de Encantamento aumenta com o tempo. Proteger um
+                    ponto com cera reduz a barra; no combate, o canto diminui
+                    a iniciativa de Odisseu na rodada seguinte.
+Cila .............. Ative os mecanismos antes do proximo impacto. Um ataque
+                    pode desligar um mecanismo; tentaculos restantes ficam
+                    mais rapidos quando um deles e derrotado.
+Itaca ............. Passe pela esquerda para tentar a rota furtiva ou pela
+                    direita para a rota direta. Evite as patrulhas para ganhar
+                    iniciativa; pretendentes podem proteger aliados feridos.
+
 Se o Windows mostrar "O Windows protegeu o computador", clique em
 "Mais informacoes" e depois em "Executar assim mesmo". O aviso aparece
 porque o .exe nao tem assinatura digital.

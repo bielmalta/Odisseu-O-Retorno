@@ -5,6 +5,7 @@
 
 #include "acoes_combate.h"
 #include "fase_render.h"
+#include "ia_inimigo.h"
 
 enum {
     MARGEM = 12,
@@ -373,6 +374,21 @@ static void desenharTurno(const Combate *combate, int largura)
     }
 }
 
+static void desenharIntencaoEspecial(const Combate *combate, int largura)
+{
+    const char *texto = intencaoEspecialInimigo(combate);
+    Rectangle faixa;
+
+    if (texto == NULL) {
+        return;
+    }
+
+    faixa = (Rectangle){ (float)largura / 2.0f - 310.0f, 140.0f, 620.0f, 42.0f };
+    DrawRectangleRec(faixa, (Color){ 120, 20, 25, 225 });
+    DrawRectangleLinesEx(faixa, 2.0f, GOLD);
+    desenharTextoCentralizado(texto, faixa, 18, WHITE);
+}
+
 static void desenharFichaTurno(const TurnoPainel *turno, Rectangle ficha)
 {
     const Personagem *personagem = turno->personagem;
@@ -394,8 +410,8 @@ static void desenharFichaTurno(const TurnoPainel *turno, Rectangle ficha)
         jaAgiu ? LIGHTGRAY : WHITE
     );
     desenharTexto(
-        personagem->bonusIniciativa > 0
-            ? TextFormat("ini %d +%d", personagem->iniciativa, personagem->bonusIniciativa)
+        personagem->bonusIniciativa != 0
+            ? TextFormat("ini %d %+d", personagem->iniciativa, personagem->bonusIniciativa)
             : TextFormat("ini %d", personagem->iniciativa),
         (int)ficha.x + 8, (int)ficha.y + 23, 12, jaAgiu ? GRAY : LIGHTGRAY
     );
@@ -534,6 +550,7 @@ void desenharHudCombate(
 
     desenharTurno(combate, largura);
     desenharOrdemTurnos(combate, largura);
+    desenharIntencaoEspecial(combate, largura);
     desenharInimigos(painel, animacao, largura);
     desenharPersonagem(
         combate->jogador, vidaExibida(animacao, combate->jogador),

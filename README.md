@@ -172,18 +172,28 @@ combate.
 
 ### Fases mitológicas
 
-1. **A Caverna de Polifemo:** coletar três peças de madeira, preparar a estaca,
-   derrotar Polifemo e encontrar a saída da caverna.
-2. **O Canto das Sereias:** proteger três pontos do convés, enfrentar duas
-   Sereias e alcançar o leme.
-3. **O Estreito de Cila:** reativar três mecanismos do navio, derrotar os três
-   tentáculos de Cila e alcançar a proa.
-4. **O Retorno a Ítaca:** recuperar o arco de Odisseu, derrotar os pretendentes
-   e atravessar o palácio até Penélope.
+1. **A Caverna de Polifemo:** coletar três peças de madeira enquanto Polifemo
+   ronda a caverna. No combate, o ciclope anuncia o golpe pesado uma rodada
+   antes; defender no momento certo reduz fortemente o impacto.
+2. **O Canto das Sereias:** proteger três pontos do convés antes que a barra de
+   encantamento encha. Cada ponto protegido reduz a barra; se ela chegar ao
+   limite, uma proteção pode ser perdida. No combate, Ligeia reduz a iniciativa
+   de Odisseu e altera a próxima ordenação do QuickSort.
+3. **O Estreito de Cila:** reativar três mecanismos entre ataques temporizados
+   contra o navio. Um impacto pode desligar um mecanismo já ativado. Durante a
+   luta, cada tentáculo derrotado aumenta a iniciativa dos restantes, mudando
+   o padrão e a ordem dos turnos.
+4. **O Retorno a Ítaca:** escolher a rota furtiva, evitando as patrulhas e a
+   barra de suspeita, ou seguir pela rota direta e alertar os inimigos. Chegar
+   ao arco sem ser percebido concede iniciativa no confronto, enquanto os
+   pretendentes podem gastar a vez protegendo um aliado ferido.
 
 Cada fase possui cenário, cores, objetivo, interação, quantidade de inimigos,
 atributos e representação visual próprios. A mesma lista circular, o mesmo
 QuickSort e o mesmo controlador de combate são reutilizados em todas elas.
+As habilidades especiais também usam essa estrutura: encantamento, fúria de
+Cila e vantagem furtiva alteram a iniciativa que o QuickSort ordena, e aliados
+derrotados ou protegidos continuam sendo encontrados pela lista circular.
 
 ### Sequências narrativas
 

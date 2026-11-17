@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "identidade_fase.h"
 #include "objetivo.h"
 #include "personagem.h"
 #include "raylib.h"
@@ -60,6 +61,7 @@ typedef struct ConfiguracaoEncontro {
 } ConfiguracaoEncontro;
 
 typedef struct ConfiguracaoFase {
+    IdentidadeFase identidade;
     const char *id;
     const char *titulo;
     const char *instrucaoInicial;

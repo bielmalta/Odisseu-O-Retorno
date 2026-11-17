@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 
+#include "identidade_fase.h"
 #include "lista_turnos.h"
 #include "personagem.h"
 
@@ -27,6 +28,15 @@ typedef struct {
     int turnosConcluidos;
     Personagem *jogador;
     Personagem *participanteAtual;
+
+    /* Regras especiais do encontro atual. Permanecem em C puro: a interface
+     * apenas consulta estes sinais para explicar o que esta acontecendo. */
+    IdentidadeFase identidade;
+    bool golpePesadoPreparado;
+    unsigned int rodadaUltimoEncanto;
+    int penalidadeIniciativaPendente;
+    int inimigosDerrotados;
+    bool vantagemFurtiva;
 } Combate;
 
 /* Prepara o controlador para receber participantes. */
@@ -38,6 +48,14 @@ bool prepararCombate(
     Personagem *jogador,
     Personagem **inimigos,
     int quantidadeInimigos
+);
+
+/* Liga ao controlador as regras exclusivas da fase. Chamar depois de
+ * prepararCombate() e antes do primeiro atualizarCombate(). */
+void configurarIdentidadeCombate(
+    Combate *combate,
+    IdentidadeFase identidade,
+    bool vantagemFurtiva
 );
 
 /* Atualiza a maquina de estados do combate. */

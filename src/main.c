@@ -83,6 +83,12 @@ static void iniciarConfronto(void)
         return;
     }
 
+    configurarIdentidadeCombate(
+        &combate,
+        fase.configuracao->identidade,
+        fase.rotaItaca == ROTA_ITACA_FURTIVA && !fase.detectadoEmItaca
+    );
+
     /* O HUD le os inimigos agora, antes de a lista ser ordenada. */
     iniciarPainelCombate(&painel, &combate);
     iniciarEsperaTurnoInimigo(&esperaInimigo);
@@ -148,6 +154,7 @@ static void reiniciarConfronto(void)
     finalizarCombate(&combate);
     jornada.odisseu.vida = jornada.odisseu.vidaMaxima;
     jornada.odisseu.bonusDefesa = 0;
+    jornada.odisseu.bonusIniciativa = 0;
     if (criarInimigosDaFase()) {
         iniciarConfronto();
     }

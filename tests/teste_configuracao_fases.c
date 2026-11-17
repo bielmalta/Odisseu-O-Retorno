@@ -1,3 +1,4 @@
+#undef NDEBUG
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -67,6 +68,12 @@ static void testarFasesMitologicas(void)
     };
     const int quantidades[] = { 3, 3, 3, 1 };
     const int inimigos[] = { 1, 2, 3, 2 };
+    const IdentidadeFase identidades[] = {
+        IDENTIDADE_POLIFEMO,
+        IDENTIDADE_SEREIAS,
+        IDENTIDADE_CILA,
+        IDENTIDADE_ITACA
+    };
 
     for (int i = 0; i < quantidadeConfiguracoesFase(); i++) {
         const ConfiguracaoFase *configuracao = obterConfiguracaoFase(i);
@@ -74,6 +81,7 @@ static void testarFasesMitologicas(void)
 
         assert(configuracao != NULL);
         assert(strcmp(configuracao->id, ids[i]) == 0);
+        assert(configuracao->identidade == identidades[i]);
         assert(configuracao->objetivo.tipo == tipos[i]);
         assert(configuracao->objetivo.quantidadeNecessaria == quantidades[i]);
         assert(configuracao->quantidadeItens == quantidades[i]);
@@ -94,6 +102,48 @@ static void testarFasesMitologicas(void)
             ));
         }
     }
+}
+
+static void testarMecanicasDeExploracao(void)
+{
+    Fase polifemo;
+    Fase sereias;
+    Fase cila;
+    Fase itaca;
+    Vector3 posicaoAnterior;
+
+    assert(criarFase(&polifemo, obterConfiguracaoFase(0)));
+    posicaoAnterior = polifemo.posicaoAmeaca;
+    atualizarFase(&polifemo, polifemo.pontoInicial, 1.0f);
+    assert(polifemo.posicaoAmeaca.x != posicaoAnterior.x ||
+           polifemo.posicaoAmeaca.z != posicaoAnterior.z);
+
+    assert(criarFase(&sereias, obterConfiguracaoFase(1)));
+    atualizarFase(&sereias, sereias.pontoInicial, 1.0f);
+    assert(sereias.medidorPerigo > 0.0f);
+    sereias.itemAlvo = 0;
+    assert(interagir(&sereias));
+    assert(sereias.medidorPerigo == 0.0f);
+
+    assert(criarFase(&cila, obterConfiguracaoFase(2)));
+    cila.itemAlvo = 0;
+    assert(interagir(&cila));
+    assert(cila.objetivo.progresso == 1);
+    atualizarFase(&cila, cila.pontoInicial, CILA_INTERVALO_ATAQUE + 0.1f);
+    assert(cila.objetivo.progresso == 0);
+    assert(cila.tempoImpactoVisual > 0.0f);
+
+    assert(criarFase(&itaca, obterConfiguracaoFase(3)));
+    atualizarFase(&itaca, (Vector3){ -5.0f, 0.0f, 7.0f }, 0.1f);
+    assert(itaca.rotaItaca == ROTA_ITACA_FURTIVA);
+    assert(!itaca.detectadoEmItaca);
+
+    assert(criarFase(&itaca, obterConfiguracaoFase(3)));
+    atualizarFase(&itaca, (Vector3){ 5.0f, 0.0f, 7.0f }, 0.1f);
+    assert(itaca.rotaItaca == ROTA_ITACA_DIRETA);
+    assert(itaca.detectadoEmItaca);
+
+    puts("ok: mecanicas exclusivas de exploracao");
 }
 
 static void testarConfiguracaoAlternativa(void)
@@ -143,6 +193,7 @@ int main(void)
     testarTabelaPrincipal();
     testarFasesMitologicas();
     testarConfiguracaoAlternativa();
+    testarMecanicasDeExploracao();
 
     puts("Testes das configuracoes de fase passaram.");
     return 0;

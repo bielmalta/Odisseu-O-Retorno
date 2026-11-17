@@ -13,9 +13,15 @@ static float duracaoQueda(const Personagem *personagem)
                                           : ANIM_DURACAO_QUEDA_INIMIGO;
 }
 
+static bool tipoEhAtaque(TipoEventoCombate tipo)
+{
+    return tipo == EVENTO_COMBATE_ATAQUE ||
+           tipo == EVENTO_COMBATE_ATAQUE_PESADO;
+}
+
 static float duracaoDaAcao(const EventoCombate *evento)
 {
-    if (evento->tipo == EVENTO_COMBATE_DEFESA) {
+    if (!tipoEhAtaque(evento->tipo)) {
         return ANIM_DURACAO_DEFESA;
     }
 
@@ -28,7 +34,7 @@ static float duracaoDaAcao(const EventoCombate *evento)
 
 static bool ehAtaque(const AcaoAnimada *acao)
 {
-    return acao->evento.tipo == EVENTO_COMBATE_ATAQUE;
+    return tipoEhAtaque(acao->evento.tipo);
 }
 
 /* ---- Fila ---- */
@@ -302,7 +308,7 @@ PoseInimigo poseDoInimigo(const AnimacaoCombate *animacao, const Personagem *ini
             );
         }
     } else if (acao->evento.origem == inimigo &&
-               acao->evento.tipo == EVENTO_COMBATE_DEFESA) {
+               !ehAtaque(acao)) {
         const float agachar = 0.6f + 0.4f * curvaDefesa(acao->tempo);
 
         pose.agachar = agachar > pose.agachar ? agachar : pose.agachar;

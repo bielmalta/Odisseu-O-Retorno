@@ -15,7 +15,11 @@
 
 typedef enum {
     ACAO_INIMIGO_ATACAR,
-    ACAO_INIMIGO_DEFENDER
+    ACAO_INIMIGO_DEFENDER,
+    ACAO_INIMIGO_PREPARAR_PESADO,
+    ACAO_INIMIGO_GOLPE_PESADO,
+    ACAO_INIMIGO_ENFEITICAR,
+    ACAO_INIMIGO_PROTEGER_ALIADO
 } AcaoInimigo;
 
 /* Escolhe o alvo de `inimigo`: o primeiro heroi vivo na ordem atual da
@@ -39,5 +43,9 @@ AcaoInimigo escolherAcaoInimigo(const Personagem *inimigo,
  * encerrado mesmo assim, para o combate nunca travar.
  * Devolve false se nao for a vez de um inimigo. */
 bool executarTurnoInimigo(Combate *combate);
+
+/* Texto curto para o HUD antecipar uma acao perigosa. NULL quando nao ha
+ * intencao especial pendente. */
+const char *intencaoEspecialInimigo(const Combate *combate);
 
 #endif

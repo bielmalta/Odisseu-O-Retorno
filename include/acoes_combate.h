@@ -30,10 +30,18 @@
 #define GANHO_ENERGIA_DEFESA 30
 #define GANHO_ENERGIA_DANO 15
 #define PERCENTUAL_GIRO 150 /* do ataque, contra cada inimigo */
+#define PERCENTUAL_GOLPE_PESADO 190
+#define BONUS_BLOQUEIO_GOLPE_PESADO 20
+#define PENALIDADE_ENCANTO_SEREIA 4
+#define BONUS_PROTECAO_ALIADO 9
 
 typedef enum {
     EVENTO_COMBATE_ATAQUE,
-    EVENTO_COMBATE_DEFESA
+    EVENTO_COMBATE_DEFESA,
+    EVENTO_COMBATE_ATAQUE_PESADO,
+    EVENTO_COMBATE_PREPARO_PESADO,
+    EVENTO_COMBATE_ENCANTO,
+    EVENTO_COMBATE_PROTECAO
 } TipoEventoCombate;
 
 /* Descricao do que acabou de acontecer, so para leitura. */
@@ -75,5 +83,12 @@ bool defenderNoCombate(Combate *combate);
 /* Golpe giratorio de Odisseu: exige a vez dele e CUSTO_GIRO de furia; golpeia
  * todo inimigo vivo da lista de turnos com PERCENTUAL_GIRO do ataque. */
 bool giroNoCombate(Combate *combate);
+
+/* Acoes usadas pelas identidades dos encontros. Todas validam o participante
+ * atual e encerram exatamente um turno quando executadas. */
+bool prepararGolpePesadoNoCombate(Combate *combate);
+bool golpePesadoNoCombate(Combate *combate, Personagem *alvo);
+bool enfeiticarNoCombate(Combate *combate, Personagem *alvo);
+bool protegerAliadoNoCombate(Combate *combate, Personagem *aliado);
 
 #endif

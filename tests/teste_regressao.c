@@ -334,6 +334,7 @@ static EstadoCombate jogarConfronto(Personagem *odisseu,
 
     inicializarCombate(&combate);
     assert(prepararCombate(&combate, odisseu, ponteiros, quantidade));
+    configurarIdentidadeCombate(&combate, configuracao->identidade, false);
 
     while (combate.estado != COMBATE_VICTORY &&
            combate.estado != COMBATE_DEFEAT) {
