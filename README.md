@@ -68,10 +68,16 @@ Durante os combates, o jogador poderá selecionar as ações de atacar e defende
 | Controle no combate | Ação |
 |---|---|
 | A ou clique em **Atacar** | Atacar o alvo selecionado (só no turno de Odisseu) |
-| D ou clique em **Defender** | Reduzir o próximo golpe recebido (só no turno de Odisseu) |
+| D ou clique em **Defender** | Reduzir o próximo golpe recebido e ganhar iniciativa na rodada seguinte (só no turno de Odisseu) |
+| S ou clique em **Giro** | Golpe giratório: acerta todos os inimigos vivos, percorrendo a lista circular (custa 60 de Fúria) |
 | Tab, setas ou clique no inimigo | Trocar o alvo selecionado |
 | Enter ou clique no botão | Continuar depois da vitória ou tentar de novo depois da derrota |
 | M ou clique em **Menu principal** | Voltar ao menu depois da vitória ou derrota |
+
+A **Fúria** de Odisseu sobe ao atacar (+20), defender (+30) e apanhar (+15) e
+paga o Giro. Defender também soma +4 à iniciativa dele na próxima rodada: o
+QuickSort pode colocá-lo à frente dos inimigos, e a faixa "Ordem dos turnos"
+mostra o bônus (`ini 12 +4`) até ele agir.
 
 Depois do encerramento do combate, atacar, defender e trocar o alvo ficam
 bloqueados. A tela de resultado aceita apenas continuar, tentar novamente,

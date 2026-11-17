@@ -17,6 +17,8 @@ typedef struct {
     int defesa;
     int iniciativa;
     int bonusDefesa; /* reducao temporaria do proximo dano (ver acoes_combate.h) */
+    int energia;     /* furia acumulada em combate: paga o golpe giratorio */
+    int bonusIniciativa; /* soma a iniciativa na proxima ordenacao */
 } Personagem;
 
 Personagem criarPersonagem(

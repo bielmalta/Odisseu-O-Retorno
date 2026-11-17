@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#define ACAO_MAX_ALVOS 8 /* mais que qualquer encontro do jogo */
+
 static ObservadorCombate observadorAtual = NULL;
 static void *contextoObservador = NULL;
 
@@ -33,23 +35,36 @@ static bool ataqueValido(const Personagem *atacante, const Personagem *alvo)
            atacante->tipo != alvo->tipo;
 }
 
-int realizarAtaque(Personagem *atacante, Personagem *alvo)
+static void ganharEnergia(Personagem *personagem, int quantidade)
+{
+    personagem->energia += quantidade;
+    if (personagem->energia > ENERGIA_MAXIMA) {
+        personagem->energia = ENERGIA_MAXIMA;
+    }
+}
+
+/* Golpe com `percentual` do ataque (100 = ataque normal). */
+static int golpear(Personagem *atacante, Personagem *alvo, int percentual)
 {
     if (!ataqueValido(atacante, alvo)) {
         return 0;
     }
 
-    /* Agir de novo encerra a guarda que o atacante tinha levantado. */
+    /* Agir de novo encerra a guarda e a iniciativa extra do atacante. */
     atacante->bonusDefesa = 0;
+    atacante->bonusIniciativa = 0;
 
     const bool alvoDefendia = alvo->bonusDefesa > 0;
     const int dano = aplicarDano(
         alvo,
-        calcularDano(atacante->ataque, alvo->defesa, alvo->bonusDefesa)
+        calcularDano(
+            atacante->ataque * percentual / 100, alvo->defesa, alvo->bonusDefesa
+        )
     );
 
     /* A guarda protege so contra o proximo golpe. */
     alvo->bonusDefesa = 0;
+    ganharEnergia(alvo, GANHO_ENERGIA_DANO);
 
     const EventoCombate evento = {
         EVENTO_COMBATE_ATAQUE, atacante, alvo, dano,
@@ -60,6 +75,16 @@ int realizarAtaque(Personagem *atacante, Personagem *alvo)
     return dano;
 }
 
+int realizarAtaque(Personagem *atacante, Personagem *alvo)
+{
+    const int dano = golpear(atacante, alvo, 100);
+
+    if (dano > 0) {
+        ganharEnergia(atacante, GANHO_ENERGIA_ATAQUE);
+    }
+    return dano;
+}
+
 bool realizarDefesa(Personagem *personagem)
 {
     if (!personagemVivo(personagem)) {
@@ -67,6 +92,10 @@ bool realizarDefesa(Personagem *personagem)
     }
 
     personagem->bonusDefesa = BONUS_DEFESA_ACAO;
+    if (personagem->tipo == TIPO_HEROI) {
+        personagem->bonusIniciativa = BONUS_INICIATIVA_DEFESA;
+    }
+    ganharEnergia(personagem, GANHO_ENERGIA_DEFESA);
 
     const EventoCombate evento = {
         EVENTO_COMBATE_DEFESA, personagem, personagem, 0, true, false
@@ -121,6 +150,33 @@ bool defenderNoCombate(Combate *combate)
     if (!acaoPermitida(combate) ||
         !realizarDefesa(combate->participanteAtual)) {
         return false;
+    }
+
+    concluirAcaoCombate(combate);
+    return true;
+}
+
+bool giroNoCombate(Combate *combate)
+{
+    Personagem *alvos[ACAO_MAX_ALVOS];
+    Personagem *heroi;
+    int quantidade;
+
+    if (!acaoPermitida(combate) ||
+        combate->participanteAtual != combate->jogador ||
+        combate->jogador->energia < CUSTO_GIRO) {
+        return false;
+    }
+
+    heroi = combate->jogador;
+    heroi->energia -= CUSTO_GIRO;
+
+    /* Uma volta pela lista circular de turnos. */
+    quantidade = percorrerParticipantes(&combate->turnos, alvos, ACAO_MAX_ALVOS);
+    for (int i = 0; i < quantidade; i++) {
+        if (alvos[i]->tipo == TIPO_INIMIGO) {
+            golpear(heroi, alvos[i], PERCENTUAL_GIRO);
+        }
     }
 
     concluirAcaoCombate(combate);

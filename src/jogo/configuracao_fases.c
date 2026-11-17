@@ -191,6 +191,125 @@ static const ConfiguracaoInimigo INIMIGOS_ITACA[] = {
     }
 };
 
+/* ---- Enfeites sem colisao (so desenho) ---- */
+
+#define COR_CHAMA { 255, 170, 60, 254 }  /* alfa 254: brilha, sem sombra */
+#define COR_HALO { 255, 190, 90, 60 }    /* alfa baixo: translucido */
+#define COR_LA { 232, 228, 214, 255 }
+#define COR_ESCURO { 42, 36, 34, 255 }
+#define COR_PELE { 208, 172, 142, 255 }
+#define COR_PANO { 236, 226, 200, 255 }
+#define COR_METAL_VELHO { 120, 118, 112, 255 }
+#define COR_MAR { 38, 92, 140, 255 }
+#define COR_MAR_ESCURO { 30, 62, 78, 255 }
+#define COR_GRAMA { 92, 124, 72, 255 }
+#define COR_GRAMA_ESCURA { 62, 92, 58, 255 }
+#define COR_OLHO_CILA { 255, 60, 40, 254 }
+#define COR_OURO { 205, 170, 70, 255 }
+#define COR_TAPETE { 130, 30, 40, 255 }
+#define COR_VESTIDO { 70, 100, 150, 255 }
+
+#define CIL(x, y, z, rb, h, rt, cor) { 'c', { x, y, z }, { rb, h, rt }, cor }
+#define ESF(x, y, z, rx, ry, rz, cor) { 'e', { x, y, z }, { rx, ry, rz }, cor }
+#define CAI(x, y, z, lx, ly, lz, cor) { 'b', { x, y, z }, { lx, ly, lz }, cor }
+
+static const ConfiguracaoOrnamento ORN_CAVERNA[] = {
+    CAI(0.0f, 6.9f, 0.0f, 44.0f, 0.6f, 44.0f, COR_ROCHA_ESCURA), /* teto alto */
+    CIL(-14.0f, 4.2f, -6.0f, 0.0f, 2.4f, 0.7f, COR_PEDRA_ESCURA), /* estalactites */
+    CIL(12.0f, 4.0f, -14.0f, 0.0f, 2.6f, 0.8f, COR_PEDRA_ESCURA),
+    CIL(-6.0f, 4.4f, 12.0f, 0.0f, 2.2f, 0.6f, COR_PEDRA_ESCURA),
+    CIL(15.0f, 4.2f, 8.0f, 0.0f, 2.4f, 0.7f, COR_PEDRA_ESCURA),
+    CIL(-17.5f, 0.0f, -12.0f, 0.8f, 2.2f, 0.0f, COR_PEDRA), /* estalagmites */
+    CIL(17.5f, 0.0f, -4.0f, 0.9f, 2.6f, 0.0f, COR_PEDRA),
+    CIL(-17.0f, 0.0f, 9.0f, 0.8f, 1.8f, 0.0f, COR_PEDRA),
+    CIL(16.5f, 0.0f, 16.5f, 0.9f, 2.0f, 0.0f, COR_PEDRA),
+    CIL(-19.7f, 0.0f, -8.0f, 0.09f, 1.5f, 0.07f, COR_MADEIRA_ESCURA), /* tochas */
+    CIL(19.7f, 0.0f, -8.0f, 0.09f, 1.5f, 0.07f, COR_MADEIRA_ESCURA),
+    CIL(-19.7f, 0.0f, 10.0f, 0.09f, 1.5f, 0.07f, COR_MADEIRA_ESCURA),
+    CIL(19.7f, 0.0f, 10.0f, 0.09f, 1.5f, 0.07f, COR_MADEIRA_ESCURA),
+    ESF(-19.7f, 1.7f, -8.0f, 0.22f, 0.3f, 0.22f, COR_CHAMA),
+    ESF(19.7f, 1.7f, -8.0f, 0.22f, 0.3f, 0.22f, COR_CHAMA),
+    ESF(-19.7f, 1.7f, 10.0f, 0.22f, 0.3f, 0.22f, COR_CHAMA),
+    ESF(19.7f, 1.7f, 10.0f, 0.22f, 0.3f, 0.22f, COR_CHAMA),
+    ESF(-13.0f, 0.6f, 12.0f, 0.55f, 0.42f, 0.7f, COR_LA), /* ovelhas */
+    ESF(-13.0f, 0.8f, 12.75f, 0.22f, 0.22f, 0.26f, COR_ESCURO),
+    CAI(-13.0f, 0.15f, 12.0f, 0.5f, 0.3f, 0.5f, COR_ESCURO),
+    ESF(14.0f, 0.6f, -11.0f, 0.55f, 0.42f, 0.7f, COR_LA),
+    ESF(14.0f, 0.8f, -10.25f, 0.22f, 0.22f, 0.26f, COR_ESCURO),
+    CAI(14.0f, 0.15f, -11.0f, 0.5f, 0.3f, 0.5f, COR_ESCURO),
+    CIL(-11.0f, 0.0f, -14.0f, 0.9f, 0.3f, 0.8f, COR_ROCHA), /* fogueira */
+    ESF(-11.0f, 0.7f, -14.0f, 0.4f, 0.6f, 0.4f, COR_CHAMA),
+    ESF(-19.7f, 1.7f, -8.0f, 1.1f, 1.1f, 1.1f, COR_HALO), /* brilho das chamas */
+    ESF(19.7f, 1.7f, -8.0f, 1.1f, 1.1f, 1.1f, COR_HALO),
+    ESF(-19.7f, 1.7f, 10.0f, 1.1f, 1.1f, 1.1f, COR_HALO),
+    ESF(19.7f, 1.7f, 10.0f, 1.1f, 1.1f, 1.1f, COR_HALO),
+    ESF(-11.0f, 0.7f, -14.0f, 1.8f, 1.8f, 1.8f, COR_HALO)
+};
+
+static const ConfiguracaoOrnamento ORN_SEREIAS[] = {
+    CAI(0.0f, -0.6f, 0.0f, 400.0f, 0.2f, 400.0f, COR_MAR), /* mar */
+    CAI(0.0f, 4.2f, 0.7f, 6.0f, 1.6f, 0.12f, COR_PANO), /* vela alta e verga */
+    CAI(0.0f, 5.0f, 0.7f, 7.0f, 0.18f, 0.18f, COR_MADEIRA_ESCURA),
+    CIL(-8.4f, 0.0f, 8.0f, 0.5f, 1.0f, 0.45f, COR_MADEIRA), /* barris */
+    CIL(-8.4f, 0.0f, 6.7f, 0.5f, 1.0f, 0.45f, COR_MADEIRA),
+    CIL(8.4f, 0.0f, 8.0f, 0.5f, 1.0f, 0.45f, COR_MADEIRA),
+    CIL(8.4f, 0.0f, 6.7f, 0.5f, 1.0f, 0.45f, COR_MADEIRA),
+    CIL(-8.6f, 0.0f, 10.5f, 0.07f, 2.4f, 0.05f, COR_MADEIRA_ESCURA), /* lanternas */
+    CIL(8.6f, 0.0f, 10.5f, 0.07f, 2.4f, 0.05f, COR_MADEIRA_ESCURA),
+    ESF(-8.6f, 2.55f, 10.5f, 0.2f, 0.26f, 0.2f, COR_CHAMA),
+    ESF(8.6f, 2.55f, 10.5f, 0.2f, 0.26f, 0.2f, COR_CHAMA),
+    CIL(-60.0f, -0.6f, -70.0f, 14.0f, 12.0f, 0.0f, COR_ROCHA), /* ilhas */
+    CIL(55.0f, -0.6f, -60.0f, 10.0f, 9.0f, 0.0f, COR_ROCHA),
+    CIL(-28.0f, -0.6f, -38.0f, 5.0f, 6.0f, 0.5f, COR_ROCHA_ESCURA),
+    ESF(-8.6f, 2.55f, 10.5f, 0.9f, 0.9f, 0.9f, COR_HALO),
+    ESF(8.6f, 2.55f, 10.5f, 0.9f, 0.9f, 0.9f, COR_HALO)
+};
+
+static const ConfiguracaoOrnamento ORN_CILA[] = {
+    CAI(0.0f, -0.6f, 0.0f, 400.0f, 0.2f, 400.0f, COR_MAR_ESCURO), /* mar */
+    CIL(-17.0f, -0.6f, -8.0f, 7.0f, 16.0f, 1.0f, COR_ROCHA_ESCURA), /* penhascos */
+    CIL(17.0f, -0.6f, -6.0f, 7.0f, 18.0f, 1.0f, COR_ROCHA_ESCURA),
+    CIL(-16.0f, -0.6f, 10.0f, 6.0f, 12.0f, 0.5f, COR_ROCHA),
+    CIL(16.0f, -0.6f, 12.0f, 6.0f, 13.0f, 0.5f, COR_ROCHA),
+    ESF(-24.0f, -0.4f, -26.0f, 5.0f, 4.0f, 5.0f, COR_ROCHA),
+    CAI(0.0f, 4.0f, -30.0f, 16.0f, 9.0f, 3.0f, COR_ESCURO), /* antro de Cila */
+    ESF(-2.5f, 5.0f, -28.4f, 0.55f, 0.35f, 0.2f, COR_OLHO_CILA),
+    ESF(2.5f, 5.0f, -28.4f, 0.55f, 0.35f, 0.2f, COR_OLHO_CILA),
+    CIL(-7.0f, 0.0f, 4.0f, 0.75f, 0.15f, 0.65f, COR_METAL_VELHO), /* bases dos mecanismos */
+    CIL(0.0f, 0.0f, -1.0f, 0.75f, 0.15f, 0.65f, COR_METAL_VELHO),
+    CIL(7.0f, 0.0f, 4.0f, 0.75f, 0.15f, 0.65f, COR_METAL_VELHO),
+    CIL(-9.9f, 0.0f, 10.5f, 0.07f, 2.4f, 0.05f, COR_MADEIRA_ESCURA), /* lanternas */
+    CIL(9.9f, 0.0f, 10.5f, 0.07f, 2.4f, 0.05f, COR_MADEIRA_ESCURA),
+    ESF(-9.9f, 2.55f, 10.5f, 0.2f, 0.26f, 0.2f, COR_CHAMA),
+    ESF(9.9f, 2.55f, 10.5f, 0.2f, 0.26f, 0.2f, COR_CHAMA)
+};
+
+static const ConfiguracaoOrnamento ORN_ITACA[] = {
+    CAI(0.0f, -0.1f, 0.0f, 300.0f, 0.1f, 300.0f, COR_GRAMA), /* terra ao redor */
+    CIL(-70.0f, 0.0f, -60.0f, 26.0f, 14.0f, 0.0f, COR_GRAMA_ESCURA), /* colinas */
+    CIL(60.0f, 0.0f, -70.0f, 30.0f, 16.0f, 0.0f, COR_GRAMA_ESCURA),
+    CAI(0.0f, 0.015f, -1.0f, 5.0f, 0.03f, 27.6f, COR_OURO), /* tapete */
+    CAI(0.0f, 0.02f, -1.0f, 4.2f, 0.04f, 27.0f, COR_TAPETE),
+    CAI(-8.0f, 0.15f, 2.0f, 2.0f, 0.3f, 2.0f, COR_MARMORE_ESCURO), /* bases */
+    CAI(8.0f, 0.15f, 2.0f, 2.0f, 0.3f, 2.0f, COR_MARMORE_ESCURO),
+    CAI(-8.0f, 0.15f, -7.0f, 2.0f, 0.3f, 2.0f, COR_MARMORE_ESCURO),
+    CAI(8.0f, 0.15f, -7.0f, 2.0f, 0.3f, 2.0f, COR_MARMORE_ESCURO),
+    CIL(-14.2f, 0.0f, 6.0f, 0.6f, 4.6f, 0.5f, COR_MARMORE), /* colunas */
+    CIL(14.2f, 0.0f, 6.0f, 0.6f, 4.6f, 0.5f, COR_MARMORE),
+    CIL(-14.2f, 0.0f, -6.0f, 0.6f, 4.6f, 0.5f, COR_MARMORE),
+    CIL(14.2f, 0.0f, -6.0f, 0.6f, 4.6f, 0.5f, COR_MARMORE),
+    CIL(-3.0f, 0.0f, -13.0f, 0.4f, 0.9f, 0.6f, COR_METAL_VELHO), /* braseiros */
+    CIL(3.0f, 0.0f, -13.0f, 0.4f, 0.9f, 0.6f, COR_METAL_VELHO),
+    ESF(-3.0f, 1.15f, -13.0f, 0.35f, 0.5f, 0.35f, COR_CHAMA),
+    ESF(3.0f, 1.15f, -13.0f, 0.35f, 0.5f, 0.35f, COR_CHAMA),
+    CIL(0.0f, 0.0f, -14.3f, 0.7f, 1.6f, 0.35f, COR_VESTIDO), /* Penelope */
+    CIL(0.0f, 1.6f, -14.3f, 0.35f, 0.75f, 0.28f, COR_VESTIDO),
+    ESF(0.0f, 2.55f, -14.3f, 0.2f, 0.23f, 0.2f, COR_PELE),
+    ESF(0.0f, 2.6f, -14.45f, 0.22f, 0.26f, 0.2f, COR_ESCURO),
+    ESF(-3.0f, 1.15f, -13.0f, 1.3f, 1.3f, 1.3f, COR_HALO),
+    ESF(3.0f, 1.15f, -13.0f, 1.3f, 1.3f, 1.3f, COR_HALO)
+};
+
 /* Balanceamento (commit 26), conferido por tests/teste_balanceamento.c:
  * - Odisseu: 170 de vida, 20 de ataque, 10 de defesa e 12 de iniciativa em
  *   todas as fases; a vida e carregada de uma fase para a seguinte.
@@ -218,6 +337,9 @@ static const ConfiguracaoFase FASES[] = {
         .corChao = { 90, 80, 60, 255 },
         .tamanhoChao = { 40.0f, 40.0f },
         .divisoesGrade = 40,
+        .ornamentos = ORN_CAVERNA,
+        .quantidadeOrnamentos = QUANTIDADE(ORN_CAVERNA),
+        .corCeu = { 20, 16, 14, 255 },
         .itens = ITENS_CAVERNA,
         .quantidadeItens = QUANTIDADE(ITENS_CAVERNA),
         .tamanhoItem = { 0.9f, 0.3f, 0.3f },
@@ -263,6 +385,9 @@ static const ConfiguracaoFase FASES[] = {
         .corChao = { 126, 83, 48, 255 },
         .tamanhoChao = { 18.0f, 22.0f },
         .divisoesGrade = 22,
+        .ornamentos = ORN_SEREIAS,
+        .quantidadeOrnamentos = QUANTIDADE(ORN_SEREIAS),
+        .corCeu = { 155, 200, 235, 255 },
         .itens = ITENS_SEREIAS,
         .quantidadeItens = QUANTIDADE(ITENS_SEREIAS),
         .tamanhoItem = { 0.8f, 0.8f, 0.8f },
@@ -307,6 +432,9 @@ static const ConfiguracaoFase FASES[] = {
         .corChao = { 70, 79, 88, 255 },
         .tamanhoChao = { 20.0f, 24.0f },
         .divisoesGrade = 24,
+        .ornamentos = ORN_CILA,
+        .quantidadeOrnamentos = QUANTIDADE(ORN_CILA),
+        .corCeu = { 92, 110, 120, 255 },
         .itens = ITENS_CILA,
         .quantidadeItens = QUANTIDADE(ITENS_CILA),
         .tamanhoItem = { 1.1f, 0.8f, 1.1f },
@@ -352,6 +480,9 @@ static const ConfiguracaoFase FASES[] = {
         .corChao = { 190, 180, 160, 255 },
         .tamanhoChao = { 30.0f, 30.0f },
         .divisoesGrade = 30,
+        .ornamentos = ORN_ITACA,
+        .quantidadeOrnamentos = QUANTIDADE(ORN_ITACA),
+        .corCeu = { 160, 200, 235, 255 },
         .itens = ITENS_ITACA,
         .quantidadeItens = QUANTIDADE(ITENS_ITACA),
         .tamanhoItem = { 1.6f, 0.35f, 0.5f },

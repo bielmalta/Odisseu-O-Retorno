@@ -23,6 +23,16 @@ typedef struct ConfiguracaoCaixaCenario {
     bool portao;
 } ConfiguracaoCaixaCenario;
 
+/* Enfeite sem colisao. forma: 'c' cilindro (posicao = centro da base, tamanho =
+ * raio da base, altura, raio do topo), 'e' esfera (tamanho = os tres raios) ou
+ * 'b' caixa (posicao = centro, tamanho = dimensoes). */
+typedef struct ConfiguracaoOrnamento {
+    char forma;
+    Vector3 posicao;
+    Vector3 tamanho;
+    Color cor;
+} ConfiguracaoOrnamento;
+
 typedef struct ConfiguracaoItemFase {
     Vector3 posicao;
     bool removerAoInteragir;
@@ -63,6 +73,10 @@ typedef struct ConfiguracaoFase {
     Color corChao;
     Vector2 tamanhoChao;
     int divisoesGrade;
+
+    const ConfiguracaoOrnamento *ornamentos;
+    int quantidadeOrnamentos;
+    Color corCeu; /* fundo e cor da nevoa */
 
     const ConfiguracaoItemFase *itens;
     int quantidadeItens;

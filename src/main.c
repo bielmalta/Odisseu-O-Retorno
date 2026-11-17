@@ -14,6 +14,7 @@
 #include "efeitos_combate.h"
 #include "hud_combate.h"
 #include "ia_inimigo.h"
+#include "iluminacao.h"
 #include "jornada.h"
 #include "narrativa.h"
 #include "painel_combate.h"
@@ -238,6 +239,7 @@ static void inicializarJogo(void)
     iniciarAnimacaoCombate(&animacao);
     registrarObservadorCombate(observarEventoAnimacao, &animacao);
     iniciarAudioCombate(&sons);
+    iniciarIluminacao();
 
     sairSolicitado = false;
     prepararNovaPartida();
@@ -294,6 +296,9 @@ static void atualizarConfronto(float deltaTempo)
         break;
     case COMANDO_DEFENDER:
         defenderNoCombate(&combate);
+        break;
+    case COMANDO_ESPECIAL:
+        giroNoCombate(&combate);
         break;
     case COMANDO_CONTINUAR:
         if (animando) {
@@ -451,7 +456,6 @@ static void atualizarJogo(float deltaTempo)
 
 static void desenharJogo(void)
 {
-    const char *nomeEstado = "EXPLORACAO";
     const bool pausado = estadoAtual == ESTADO_PAUSA;
     const bool combatendo = estadoAtual == ESTADO_COMBATE ||
         (pausado && estadoAntesDaPausa == ESTADO_COMBATE);
@@ -475,30 +479,33 @@ static void desenharJogo(void)
         return;
     }
 
+    const Color ceu = fase.configuracao->corCeu;
+
     if (combatendo) {
-        nomeEstado = "COMBATE";
         poseJogador = poseDoJogador(&animacao, &jornada.odisseu);
         for (int i = 0; i < fase.quantidadeInimigos &&
                         i < painel.quantidadeInimigos; i++) {
             posesInimigos[i] = poseDoInimigo(&animacao, painel.inimigos[i]);
         }
         camera = camaraComEfeitos(jogador.camera, &poseJogador, (float)GetTime());
-    } else if (pausado) {
-        nomeEstado = "PAUSA";
     }
 
-    ClearBackground((Color){ 135, 180, 220, 255 });
+    /* O fundo vai do ceu escuro, no alto, ate a cor da nevoa no horizonte. */
+    ClearBackground(ceu);
+    DrawRectangleGradientV(
+        0, 0, GetScreenWidth(), GetScreenHeight(), ColorBrightness(ceu, -0.45f), ceu
+    );
 
     BeginMode3D(camera);
+    comecarLuz(camera, ceu);
     desenharFase(&fase, combatendo ? posesInimigos : NULL);
     if (combatendo) {
         desenharArmasJogador(camera, &poseJogador);
     }
+    terminarLuz();
     EndMode3D();
 
     desenharHudFase(&fase);
-
-    DrawText(TextFormat("Estado: %s", nomeEstado), 12, 92, 18, BLACK);
 
     if (combatendo) {
         desenharEfeitosTela(&poseJogador, GetScreenWidth(), GetScreenHeight());
@@ -508,11 +515,12 @@ static void desenharJogo(void)
             desenharHudCombate(&painel, &combate, &fase, camera, &animacao);
         }
     } else {
+        DrawRectangle(0, GetScreenHeight() - 62, GetScreenWidth(), 62, (Color){ 0, 0, 0, 120 });
         DrawText(
             "WASD mover | Mouse olhar | Shift correr | Espaco pular | E interagir",
-            12, GetScreenHeight() - 50, 18, BLACK
+            12, GetScreenHeight() - 50, 18, WHITE
         );
-        DrawText("ESC pausa e retoma", 12, GetScreenHeight() - 28, 18, BLACK);
+        DrawText("ESC pausa e retoma", 12, GetScreenHeight() - 28, 18, WHITE);
     }
 
     if (pausado) {
@@ -534,6 +542,7 @@ static void finalizarJogo(void)
     /* Libera os nós da lista circular ao fechar o jogo. */
     finalizarCombate(&combate);
     encerrarAudioCombate(&sons);
+    encerrarIluminacao();
 }
 
 

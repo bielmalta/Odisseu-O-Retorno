@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stddef.h>
 
+#include "acoes_combate.h"
 #include "fase_render.h"
 
 enum {
@@ -19,7 +20,7 @@ enum {
     ALTURA_PAINEL_JOGADOR = 72,
     LARGURA_BOTAO_RESULTADO = 300,
     TOPO_ORDEM_TURNOS = 88,
-    LARGURA_FICHA_TURNO = 118,
+    LARGURA_FICHA_TURNO = 160,
     ALTURA_FICHA_TURNO = 40,
     ESPACO_FICHAS_TURNO = 6
 };
@@ -30,7 +31,7 @@ enum {
 
 static Rectangle retanguloBotao(int indice, int largura, int altura)
 {
-    const float x = (float)(largura - MARGEM - 2 * LARGURA_BOTAO - ESPACO_BOTOES)
+    const float x = (float)(largura - MARGEM - 3 * LARGURA_BOTAO - 2 * ESPACO_BOTOES)
                     + (float)(indice * (LARGURA_BOTAO + ESPACO_BOTOES));
 
     return (Rectangle){
@@ -89,6 +90,7 @@ EntradaCombate lerEntradaCombate(void)
 
     entrada.teclaAtacar = IsKeyPressed(KEY_A);
     entrada.teclaDefender = IsKeyPressed(KEY_D);
+    entrada.teclaEspecial = IsKeyPressed(KEY_S);
     entrada.teclaProximo = IsKeyPressed(KEY_TAB) ||
                            IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_DOWN);
     entrada.teclaAnterior = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_UP);
@@ -161,6 +163,13 @@ ComandoCombate interpretarEntradaCombate(
         (entrada.clique && CheckCollisionPointRec(
             entrada.mouse, retanguloBotao(1, largura, altura)))) {
         return COMANDO_DEFENDER;
+    }
+
+    if (combate->jogador != NULL && combate->jogador->energia >= CUSTO_GIRO &&
+        (entrada.teclaEspecial ||
+         (entrada.clique && CheckCollisionPointRec(
+             entrada.mouse, retanguloBotao(2, largura, altura))))) {
+        return COMANDO_ESPECIAL;
     }
 
     return COMANDO_NENHUM;
@@ -246,6 +255,26 @@ static void desenharPersonagem(
         (Rectangle){ area.x + 8, area.y + area.height - 24, area.width - 16, 18 },
         vida, personagem->vidaMaxima
     );
+
+    /* Furia de Odisseu: o giro custa CUSTO_GIRO (marca na barra). */
+    if (personagem->tipo == TIPO_HEROI) {
+        const Rectangle barra = { area.x + 8, area.y + 30, area.width - 16, 12 };
+        const float largura = barra.width * (float)personagem->energia / ENERGIA_MAXIMA;
+
+        DrawRectangleRec(barra, (Color){ 30, 30, 30, 230 });
+        DrawRectangleRec(
+            (Rectangle){ barra.x, barra.y, largura, barra.height },
+            personagem->energia >= CUSTO_GIRO ? GOLD : (Color){ 200, 130, 30, 255 }
+        );
+        DrawLine(
+            (int)(barra.x + barra.width * CUSTO_GIRO / ENERGIA_MAXIMA), (int)barra.y,
+            (int)(barra.x + barra.width * CUSTO_GIRO / ENERGIA_MAXIMA),
+            (int)(barra.y + barra.height), WHITE
+        );
+        desenharTextoCentralizado(
+            TextFormat("FURIA %d", personagem->energia), barra, 10, WHITE
+        );
+    }
 }
 
 static void desenharInimigos(
@@ -294,6 +323,11 @@ static void desenharBotoes(
     desenharBotao(
         retanguloBotao(1, largura, altura), "[D] Defender",
         (Color){ 50, 110, 190, 255 }, suaVez
+    );
+    desenharBotao(
+        retanguloBotao(2, largura, altura), "[S] Giro",
+        (Color){ 200, 130, 30, 255 },
+        suaVez && combate->jogador->energia >= CUSTO_GIRO
     );
 }
 
@@ -356,11 +390,13 @@ static void desenharFichaTurno(const TurnoPainel *turno, Rectangle ficha)
     DrawRectangleLinesEx(ficha, atual ? 3.0f : 1.0f, atual ? GOLD : BLACK);
 
     desenharTexto(
-        personagem->nome, (int)ficha.x + 8, (int)ficha.y + 4, 16,
+        personagem->nome, (int)ficha.x + 8, (int)ficha.y + 4, 14,
         jaAgiu ? LIGHTGRAY : WHITE
     );
     desenharTexto(
-        TextFormat("ini %d", personagem->iniciativa),
+        personagem->bonusIniciativa > 0
+            ? TextFormat("ini %d +%d", personagem->iniciativa, personagem->bonusIniciativa)
+            : TextFormat("ini %d", personagem->iniciativa),
         (int)ficha.x + 8, (int)ficha.y + 23, 12, jaAgiu ? GRAY : LIGHTGRAY
     );
 
@@ -507,7 +543,7 @@ void desenharHudCombate(
     desenharBotoes(painel, combate, largura, altura);
 
     desenharTexto(
-        "A atacar | D defender | TAB ou setas trocam o alvo | clique nos botoes",
+        "A atacar | D defender | S giro (furia) | TAB ou setas trocam o alvo",
         MARGEM, altura - 28, 18, WHITE
     );
 

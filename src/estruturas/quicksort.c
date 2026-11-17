@@ -7,9 +7,11 @@ bool agePrimeiro(const NoTurno *a, const NoTurno *b)
 {
     const Personagem *pa = a->personagem;
     const Personagem *pb = b->personagem;
+    const int inicA = pa->iniciativa + pa->bonusIniciativa;
+    const int inicB = pb->iniciativa + pb->bonusIniciativa;
 
-    if (pa->iniciativa != pb->iniciativa) {
-        return pa->iniciativa > pb->iniciativa;
+    if (inicA != inicB) {
+        return inicA > inicB;
     }
 
     return strcmp(pa->nome, pb->nome) < 0;

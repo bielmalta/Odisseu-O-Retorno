@@ -18,6 +18,7 @@ typedef enum {
     COMANDO_NENHUM,
     COMANDO_ATACAR,
     COMANDO_DEFENDER,
+    COMANDO_ESPECIAL,  /* golpe giratorio, pago com furia */
     COMANDO_CONTINUAR, /* depois da vitoria ou da derrota */
     COMANDO_MENU       /* volta ao menu depois do resultado */
 } ComandoCombate;
@@ -26,6 +27,7 @@ typedef enum {
 typedef struct {
     bool teclaAtacar;    /* A */
     bool teclaDefender;  /* D */
+    bool teclaEspecial;  /* S */
     bool teclaProximo;   /* TAB, seta direita ou para baixo */
     bool teclaAnterior;  /* seta esquerda ou para cima */
     bool teclaContinuar; /* ENTER */
@@ -38,7 +40,7 @@ EntradaCombate lerEntradaCombate(void);
 
 /* Aplica a entrada ao HUD. Troca o alvo do painel por conta propria (tecla
  * ou clique no inimigo) e devolve o comando pedido:
- *   - atacar/defender so existem na vez de Odisseu (fora dela os botoes
+ *   - atacar/defender/giro so existem na vez de Odisseu (fora dela os botoes
  *     ficam desabilitados e a entrada e ignorada); atacar exige um alvo;
  *   - continuar e menu so existem depois de o combate acabar.
  * `largura` e `altura` sao o tamanho da janela, que define onde ficam os

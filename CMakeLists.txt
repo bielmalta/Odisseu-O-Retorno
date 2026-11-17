@@ -53,6 +53,7 @@ add_executable(
     src/render/efeitos_combate.c
     src/render/fase_render.c
     src/render/hud_combate.c
+    src/render/iluminacao.c
     src/render/jogador.c
     src/render/tela_narrativa.c
     src/render/telas_jogo.c

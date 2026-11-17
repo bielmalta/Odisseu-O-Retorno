@@ -316,7 +316,8 @@ static void testarIntervaloVisual(void)
     Combate combate;
     EsperaTurnoInimigo espera;
     Personagem odisseu = criarPersonagem("Odisseu", TIPO_HEROI, 100, 20, 10, 5);
-    Personagem polifemo = criarPersonagem("Polifemo", TIPO_INIMIGO, 120, 25, 8, 9);
+    /* 10 > 5 + BONUS_INICIATIVA_DEFESA: defender nao tira a vez do inimigo. */
+    Personagem polifemo = criarPersonagem("Polifemo", TIPO_INIMIGO, 120, 25, 8, 10);
     Personagem *inimigos[] = {&polifemo};
 
     iniciarEsperaTurnoInimigo(&espera);

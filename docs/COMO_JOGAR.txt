@@ -18,8 +18,10 @@ E ................. interagir
 Esc ............... pausar / retomar
 Enter ............. confirmar nos menus
 
-No combate, use os botoes do painel (ou os atalhos mostrados na tela)
-para atacar e defender.
+No combate, use os botoes do painel (ou os atalhos A, D e S) para atacar,
+defender e girar a lanca (Giro: acerta todos os inimigos, custa 60 de Furia).
+Atacar, defender e apanhar enchem a barra de Furia. Defender tambem faz
+Odisseu agir mais cedo na rodada seguinte.
 
 Se o Windows mostrar "O Windows protegeu o computador", clique em
 "Mais informacoes" e depois em "Executar assim mesmo". O aviso aparece

@@ -249,6 +249,99 @@ static void testarIntegracaoComOControladorDeTurnos(void)
     finalizarCombate(&combate);
 }
 
+/* Furia, golpe giratorio e bonus de iniciativa ao defender. */
+static void testarFuriaGiroEIniciativa(void)
+{
+    Personagem odisseu = criarOdisseu();
+    Personagem a = criarPersonagem("Sereia A", TIPO_INIMIGO, 100, 16, 4, 8);
+    Personagem b = criarPersonagem("Sereia B", TIPO_INIMIGO, 100, 15, 5, 5);
+    Personagem *inimigos[] = { &a, &b };
+    RegistroEventos registro = {0};
+    Combate combate;
+
+    /* A furia sobe ao atacar (atacante), ao apanhar (alvo) e ao defender. */
+    assert(realizarAtaque(&odisseu, &a) > 0);
+    assert(odisseu.energia == GANHO_ENERGIA_ATAQUE);
+    assert(a.energia == GANHO_ENERGIA_DANO);
+    assert(realizarDefesa(&odisseu));
+    assert(odisseu.energia == GANHO_ENERGIA_ATAQUE + GANHO_ENERGIA_DEFESA);
+    assert(odisseu.bonusIniciativa == BONUS_INICIATIVA_DEFESA);
+    odisseu.energia = ENERGIA_MAXIMA;
+    realizarDefesa(&odisseu);
+    assert(odisseu.energia == ENERGIA_MAXIMA); /* nunca passa do limite */
+
+    /* Giro: so na vez de Odisseu e com furia suficiente. */
+    odisseu = criarOdisseu();
+    a = criarPersonagem("Sereia A", TIPO_INIMIGO, 100, 16, 4, 8);
+    inicializarCombate(&combate);
+    assert(prepararCombate(&combate, &odisseu, inimigos, 2));
+    atualizarCombate(&combate); /* Odisseu (12) age antes de 8 e 5 */
+    assert(combate.participanteAtual == &odisseu);
+
+    odisseu.energia = CUSTO_GIRO - 1;
+    assert(!giroNoCombate(&combate));
+    assert(combate.estado == COMBATE_WAITING_PLAYER && a.vida == 100);
+
+    odisseu.energia = CUSTO_GIRO;
+    registrarObservadorCombate(guardarEvento, &registro);
+    assert(giroNoCombate(&combate));
+    registrarObservadorCombate(NULL, NULL);
+    assert(registro.quantidade == 2); /* um golpe por inimigo vivo */
+    assert(a.vida == 100 - (20 * PERCENTUAL_GIRO / 100 - 4));
+    assert(b.vida == 100 - (20 * PERCENTUAL_GIRO / 100 - 5));
+    assert(odisseu.energia == 0);
+    assert(combate.estado == COMBATE_RESOLVING);
+    assert(!giroNoCombate(&combate)); /* a vez ja foi gasta */
+
+    /* O giro derrota quem estiver fraco e remove os nos da lista. */
+    odisseu.energia = CUSTO_GIRO;
+    a.vida = 3;
+    b.vida = 3;
+    atualizarCombate(&combate);
+    assert(combate.participanteAtual == &a);
+    assert(!giroNoCombate(&combate)); /* nao e a vez de Odisseu */
+    finalizarCombate(&combate);
+
+    a = criarPersonagem("Sereia A", TIPO_INIMIGO, 3, 16, 4, 8);
+    b = criarPersonagem("Sereia B", TIPO_INIMIGO, 3, 15, 5, 5);
+    odisseu = criarOdisseu();
+    odisseu.energia = CUSTO_GIRO;
+    assert(prepararCombate(&combate, &odisseu, inimigos, 2));
+    atualizarCombate(&combate);
+    assert(giroNoCombate(&combate));
+    assert(combate.estado == COMBATE_VICTORY);
+    assert(combate.turnos.tamanho == 1);
+    finalizarCombate(&combate);
+
+    /* Defender da iniciativa: Odisseu (12) agia depois do inimigo (13) e,
+     * depois de defender, o QuickSort o poe na frente na rodada seguinte. */
+    odisseu = criarOdisseu();
+    a = criarPersonagem("Sereia A", TIPO_INIMIGO, 100, 16, 4, 13);
+    inimigos[0] = &a;
+    assert(prepararCombate(&combate, &odisseu, inimigos, 1));
+    atualizarCombate(&combate);
+    assert(combate.participanteAtual == &a);
+    assert(atacarNoCombate(&combate, &odisseu));
+    atualizarCombate(&combate);
+    assert(combate.participanteAtual == &odisseu);
+    assert(defenderNoCombate(&combate));
+    atualizarCombate(&combate); /* a rodada acaba */
+    atualizarCombate(&combate); /* rodada 2: ordena de novo */
+    assert(combate.rodada == 2);
+    assert(combate.participanteAtual == &odisseu);
+
+    /* Agir encerra o bonus: na rodada 3 ele volta a ser o segundo. */
+    assert(atacarNoCombate(&combate, &a));
+    assert(odisseu.bonusIniciativa == 0);
+    atualizarCombate(&combate);
+    assert(atacarNoCombate(&combate, &odisseu));
+    atualizarCombate(&combate);
+    atualizarCombate(&combate);
+    assert(combate.rodada == 3);
+    assert(combate.participanteAtual == &a);
+    finalizarCombate(&combate);
+}
+
 int main(void)
 {
     testarFormulaDoDano();
@@ -259,6 +352,7 @@ int main(void)
     testarDefesaForteAindaCausaDanoMinimo();
     testarEventos();
     testarIntegracaoComOControladorDeTurnos();
+    testarFuriaGiroEIniciativa();
 
     printf("\nTESTE DAS ACOES DE COMBATE PASSOU!\n");
 

@@ -17,6 +17,20 @@
 /* Defesa extra ganha ao escolher "defender". */
 #define BONUS_DEFESA_ACAO 5
 
+/* Ao defender, o heroi tambem ganha iniciativa na proxima ordenacao (QuickSort):
+ * pode agir antes na rodada seguinte. O bonus acaba quando ele age. Os
+ * inimigos seguem a iniciativa fixa, para o comportamento deles continuar previsivel. */
+#define BONUS_INICIATIVA_DEFESA 4
+
+/* Furia: sobe ao atacar, defender e apanhar; gasta no golpe giratorio, que
+ * percorre a lista circular e acerta todos os inimigos vivos. */
+#define ENERGIA_MAXIMA 100
+#define CUSTO_GIRO 60
+#define GANHO_ENERGIA_ATAQUE 20
+#define GANHO_ENERGIA_DEFESA 30
+#define GANHO_ENERGIA_DANO 15
+#define PERCENTUAL_GIRO 150 /* do ataque, contra cada inimigo */
+
 typedef enum {
     EVENTO_COMBATE_ATAQUE,
     EVENTO_COMBATE_DEFESA
@@ -57,5 +71,9 @@ void registrarObservadorCombate(ObservadorCombate observador, void *contexto);
  * sem gastar o turno, se a acao nao pode ser feita agora. */
 bool atacarNoCombate(Combate *combate, Personagem *alvo);
 bool defenderNoCombate(Combate *combate);
+
+/* Golpe giratorio de Odisseu: exige a vez dele e CUSTO_GIRO de furia; golpeia
+ * todo inimigo vivo da lista de turnos com PERCENTUAL_GIRO do ataque. */
+bool giroNoCombate(Combate *combate);
 
 #endif
