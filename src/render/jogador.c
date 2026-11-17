@@ -209,13 +209,17 @@ void atualizarJogador(Jogador *jogador, ComandosJogador comandos,
     }
     float vel = comandos.correr ? JOGADOR_VEL_CORRER : JOGADOR_VEL_ANDAR;
 
+    /* Quem ja esta dentro de uma caixa (dado de fase errado) anda livre ate
+     * sair, em vez de ficar preso para sempre. */
+    const bool preso = colide(jogador->posicao, obstaculos, quantidade);
+
     Vector3 tentativa = jogador->posicao;
     tentativa.x += desejo.x * vel * dt;
-    if (!colide(tentativa, obstaculos, quantidade)) jogador->posicao.x = tentativa.x;
+    if (preso || !colide(tentativa, obstaculos, quantidade)) jogador->posicao.x = tentativa.x;
 
     tentativa = jogador->posicao;
     tentativa.z += desejo.z * vel * dt;
-    if (!colide(tentativa, obstaculos, quantidade)) jogador->posicao.z = tentativa.z;
+    if (preso || !colide(tentativa, obstaculos, quantidade)) jogador->posicao.z = tentativa.z;
 
     /* Vertical: pulo, gravidade, chao e batida de cabeca */
     if (comandos.pular && jogador->noChao) {

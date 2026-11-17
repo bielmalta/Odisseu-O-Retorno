@@ -4,6 +4,16 @@
 
 #include "configuracao_fases.h"
 #include "fase.h"
+#include "jogador.h"
+
+/* Mesma regra de colisao do jogador: o corpo nao pode nascer dentro de uma
+ * caixa, senao ele fica preso (aconteceu no confronto com Cila). */
+static bool corpoDentroDe(Vector3 p, BoundingBox c)
+{
+    return p.x + JOGADOR_RAIO > c.min.x && p.x - JOGADOR_RAIO < c.max.x &&
+           p.z + JOGADOR_RAIO > c.min.z && p.z - JOGADOR_RAIO < c.max.z &&
+           p.y + JOGADOR_ALTURA_CORPO > c.min.y && p.y < c.max.y;
+}
 
 static void testarTabelaPrincipal(void)
 {
@@ -76,6 +86,13 @@ static void testarFasesMitologicas(void)
         assert(fase.objetivo.tipo == tipos[i]);
         assert(fase.quantidadeInimigos == inimigos[i]);
         assert(fase.indicePortao >= 0);
+
+        for (int c = 0; c < fase.cenario.quantidade; c++) {
+            assert(!corpoDentroDe(fase.pontoInicial, fase.cenario.caixas[c]));
+            assert(!corpoDentroDe(
+                fase.pontoJogadorConfronto, fase.cenario.caixas[c]
+            ));
+        }
     }
 }
 

@@ -106,7 +106,7 @@ static const ConfiguracaoCaixaCenario CAIXAS_CILA[] = {
     { { 0.0f, 2.0f, -12.5f }, { 6.0f, 4.0f, 1.0f }, COR_PORTAO, true },
     { { -7.0f, 1.5f, -3.0f }, { 3.0f, 3.0f, 3.0f }, COR_ROCHA_ESCURA, false },
     { { 7.0f, 1.5f, -3.0f }, { 3.0f, 3.0f, 3.0f }, COR_ROCHA_ESCURA, false },
-    { { 0.0f, 0.6f, 5.5f }, { 5.0f, 1.2f, 2.0f }, COR_MADEIRA_ESCURA, false }
+    { { 6.0f, 0.6f, 8.5f }, { 3.0f, 1.2f, 2.0f }, COR_MADEIRA_ESCURA, false }
 };
 
 static const ConfiguracaoItemFase ITENS_CILA[] = {
